@@ -23,6 +23,10 @@ app.get("/", function(req, res) {
     res.sendFile(__dirname + '/index.html')
 });
 
+app.get("/ind", function(req, res) {
+    res.sendFile(__dirname + '/index1.html')
+});
+
 app.get("/icons.html", function(req, res) {
 	res.sendFile(__dirname + '/icons.html')
 });
