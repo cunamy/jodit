@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { Config } from '../../Config';
@@ -29,8 +29,8 @@ import {
 	isHTMLFromWord,
 	trim,
 	type,
-	setTimeout,
-	stripTags
+	stripTags,
+	isString
 } from '../../modules/helpers/';
 
 import { Dom } from '../../modules/Dom';
@@ -44,7 +44,10 @@ declare module '../../Config' {
 		 * Ask before paste HTML in WYSIWYG mode
 		 */
 		askBeforePasteHTML: boolean;
+		processPasteHTML: boolean;
+
 		askBeforePasteFromWord: boolean;
+		processPasteFromWord: boolean;
 
 		/**
 		 * Inserts HTML line breaks before all newlines in a string
@@ -59,7 +62,11 @@ declare module '../../Config' {
 }
 
 Config.prototype.askBeforePasteHTML = true;
+Config.prototype.processPasteHTML = true;
+
 Config.prototype.askBeforePasteFromWord = true;
+Config.prototype.processPasteFromWord = true;
+
 Config.prototype.nl2brInPlainText = true;
 Config.prototype.defaultActionOnPaste = INSERT_AS_HTML;
 
@@ -70,7 +77,11 @@ export const getDataTransfer = (
 		return (event as ClipboardEvent).clipboardData;
 	}
 
-	return (event as DragEvent).dataTransfer || new DataTransfer();
+	try {
+		return (event as DragEvent).dataTransfer || new DataTransfer();
+	} catch {
+		return null;
+	}
 };
 
 Config.prototype.controls.paste = {
@@ -92,8 +103,8 @@ Config.prototype.controls.paste = {
 				const items = await (navigator.clipboard as any).read();
 
 				if (items && items.length) {
-					const textBlob = await items[0].getType("text/plain");
-					text = await (new Response(textBlob)).text();
+					const textBlob = await items[0].getType('text/plain');
+					text = await new Response(textBlob).text();
 				}
 			} catch {}
 
@@ -132,90 +143,82 @@ Config.prototype.controls.paste = {
  * Ask before paste HTML source
  */
 export function paste(editor: IJodit) {
-	const clearOrKeep = (
-		msg: string,
-		title: string,
-		callback: (yes: boolean | number) => void,
-		clearButton: string = 'Clean',
-		clear2Button: string = 'Insert only Text'
-	): Dialog | void => {
-		if (
-			editor.events &&
-			editor.events.fire(
-				'beforeOpenPasteDialog',
-				msg,
+	const opt = editor.options,
+		clearOrKeep = (
+			msg: string,
+			title: string,
+			callback: (yes: boolean | number) => void,
+			clearButton: string = 'Clean',
+			clear2Button: string = 'Insert only Text'
+		): Dialog | void => {
+			if (
+				editor.events &&
+				editor.events.fire(
+					'beforeOpenPasteDialog',
+					msg,
+					title,
+					callback,
+					clearButton,
+					clear2Button
+				) === false
+			) {
+				return;
+			}
+
+			const dialog = Confirm(
+				`<div style="word-break: normal; white-space: normal">${msg}</div>`,
 				title,
-				callback,
-				clearButton,
-				clear2Button
-			) === false
-		) {
-			return;
-		}
+				callback
+			);
 
-		const dialog: Dialog = Confirm(
-			`<div style="word-break: normal; white-space: normal">${msg}</div>`,
-			title,
-			callback
-		);
+			editor.markOwner(dialog.container);
 
-		dialog.container.setAttribute('data-editor_id', editor.id);
+			const keep = dialog.create.fromHTML(
+				`<a href="javascript:void(0)" class="jodit_button jodit_button_primary"><span>${editor.i18n(
+					'Keep'
+				)}</span></a>`
+			) as HTMLAnchorElement;
 
-		const keep = dialog.create.fromHTML(
-			'<a href="javascript:void(0)" style="float:left;" class="jodit_button">' +
-				'<span>' +
-				editor.i18n('Keep') +
-				'</span>' +
-				'</a>'
-		) as HTMLAnchorElement;
+			const clear = dialog.create.fromHTML(
+				`<a href="javascript:void(0)" class="jodit_button"><span>${editor.i18n(
+					clearButton
+				)}</span></a>`
+			) as HTMLAnchorElement;
 
-		const clear = dialog.create.fromHTML(
-			'<a href="javascript:void(0)" style="float:left;" class="jodit_button">' +
-				'<span>' +
-				editor.i18n(clearButton) +
-				'</span>' +
-				'</a>'
-		) as HTMLAnchorElement;
+			const clear2 = dialog.create.fromHTML(
+				`<a href="javascript:void(0)" class="jodit_button"><span>${editor.i18n(
+					clear2Button
+				)}</span></a>`
+			) as HTMLAnchorElement;
 
-		const clear2 = dialog.create.fromHTML(
-			'<a href="javascript:void(0)" style="float:left;" class="jodit_button">' +
-				'<span>' +
-				editor.i18n(clear2Button) +
-				'</span>' +
-				'</a>'
-		) as HTMLAnchorElement;
+			const cancel = dialog.create.fromHTML(
+				`<a href="javascript:void(0)" class="jodit_button"><span>${editor.i18n(
+					'Cancel'
+				)}</span></a>`
+			) as HTMLAnchorElement;
 
-		const cancel = dialog.create.fromHTML(
-			'<a href="javascript:void(0)" style="float:right;" class="jodit_button">' +
-				'<span>' +
-				editor.i18n('Cancel') +
-				'</span>' +
-				'</a>'
-		) as HTMLAnchorElement;
+			editor.events.on(keep, 'click', () => {
+				dialog.close();
+				callback && callback(true);
+			});
 
-		editor.events.on(keep, 'click', () => {
-			dialog.close();
-			callback && callback(true);
-		});
+			editor.events.on(clear, 'click', () => {
+				dialog.close();
+				callback && callback(false);
+			});
 
-		editor.events.on(clear, 'click', () => {
-			dialog.close();
-			callback && callback(false);
-		});
+			editor.events.on(clear2, 'click', () => {
+				dialog.close();
+				callback && callback(0);
+			});
 
-		editor.events.on(clear2, 'click', () => {
-			dialog.close();
-			callback && callback(0);
-		});
+			editor.events.on(cancel, 'click', () => {
+				dialog.close();
+			});
 
-		editor.events.on(cancel, 'click', () => {
-			dialog.close();
-		});
+			dialog.setFooter([keep, clear, clear2Button ? clear2 : '', cancel]);
 
-		dialog.setFooter([keep, clear, clear2Button ? clear2 : '', cancel]);
-
-		editor.events &&
-			editor.events.fire(
+			editor.events?.fire(
 				'afterOpenPasteDialog',
 				dialog,
 				msg,
@@ -225,8 +228,8 @@ export function paste(editor: IJodit) {
 				clear2Button
 			);
 
-		return dialog;
-	};
+			return dialog;
+		};
 
 	const insertByType = (html: string | Node, subtype: string) => {
 		if (typeof html === 'string') {
@@ -237,9 +240,11 @@ export function paste(editor: IJodit) {
 				case INSERT_ONLY_TEXT:
 					html = stripTags(html);
 					break;
+
 				case INSERT_AS_TEXT:
 					html = htmlspecialchars(html);
 					break;
+
 				default:
 			}
 		}
@@ -258,35 +263,44 @@ export function paste(editor: IJodit) {
 		const buffer = editor.buffer.get(clipboardPluginKey);
 
 		if (isHTML(html) && buffer !== trimFragment(html)) {
-			editor.events.stopPropagation('beforePaste');
-
 			html = trimFragment(html);
-			clearOrKeep(
-				editor.i18n('Your code is similar to HTML. Keep as HTML?'),
-				editor.i18n('Paste as HTML'),
-				(agree: boolean | number) => {
-					let insertType: string = INSERT_AS_HTML;
-					if (agree === false) {
-						insertType = INSERT_AS_TEXT;
-					}
 
-					if (agree === 0) {
-						insertType = INSERT_ONLY_TEXT;
-					}
+			const pasteHTMLByType = (insertType: string) => {
+				if (event.type === 'drop') {
+					editor.selection.insertCursorAtPoint(
+						(event as DragEvent).clientX,
+						(event as DragEvent).clientY
+					);
+				}
 
-					if (event.type === 'drop') {
-						editor.selection.insertCursorAtPoint(
-							(event as DragEvent).clientX,
-							(event as DragEvent).clientY
-						);
-					}
+				insertByType(html, insertType);
 
-					insertByType(html, insertType);
+				editor.setEditorValue();
+			};
 
-					editor.setEditorValue();
-				},
-				'Insert as Text'
-			);
+			if (opt.askBeforePasteHTML) {
+				clearOrKeep(
+					editor.i18n('Your code is similar to HTML. Keep as HTML?'),
+					editor.i18n('Paste as HTML'),
+					(agree: boolean | number) => {
+						let insertType: string = INSERT_AS_HTML;
+
+						if (agree === false) {
+							insertType = INSERT_AS_TEXT;
+						}
+
+						if (agree === 0) {
+							insertType = INSERT_ONLY_TEXT;
+						}
+
+						pasteHTMLByType(insertType);
+					},
+					'Insert as Text'
+				);
+			} else {
+				pasteHTMLByType(opt.defaultActionOnPaste);
+			}
+
 			return false;
 		}
 	};
@@ -307,9 +321,155 @@ export function paste(editor: IJodit) {
 		return html;
 	};
 
-	editor.events.on(
-		'paste',
-		(event: ClipboardEvent | DragEvent): false | void => {
+	const beforePaste = (event: ClipboardEvent | DragEvent): false | void => {
+		const dt = getDataTransfer(event);
+
+		if (!dt || !event || !dt.getData) {
+			return;
+		}
+
+		if (dt.getData(TEXT_HTML)) {
+			const processHTMLData = (html: string): void | false => {
+				const buffer = editor.buffer.get(clipboardPluginKey);
+
+				if (
+					opt.processPasteHTML &&
+					isHTML(html) &&
+					buffer !== trimFragment(html)
+				) {
+					if (opt.processPasteFromWord && isHTMLFromWord(html)) {
+						const pasteFromWordByType = (method: string) => {
+							if (method === INSERT_AS_HTML) {
+								html = applyStyles(html);
+
+								if (opt.beautifyHTML) {
+									const value = editor.events?.fire(
+										'beautifyHTML',
+										html
+									);
+
+									if (isString(value)) {
+										html = value;
+									}
+								}
+							}
+
+							if (method === INSERT_AS_TEXT) {
+								html = cleanFromWord(html);
+							}
+
+							if (method === INSERT_ONLY_TEXT) {
+								html = stripTags(cleanFromWord(html));
+							}
+
+							editor.selection.insertHTML(html);
+							editor.setEditorValue();
+						};
+
+						if (opt.askBeforePasteFromWord) {
+							clearOrKeep(
+								editor.i18n(
+									'The pasted content is coming from a Microsoft Word/Excel document. ' +
+										'Do you want to keep the format or clean it up?'
+								),
+
+								editor.i18n('Word Paste Detected'),
+								(agree: number | boolean) => {
+									let insertType: string = INSERT_AS_HTML;
+
+									if (agree === false) {
+										insertType = INSERT_AS_TEXT;
+									}
+
+									if (agree === 0) {
+										insertType = INSERT_ONLY_TEXT;
+									}
+
+									pasteFromWordByType(insertType);
+								}
+							);
+						} else {
+							pasteFromWordByType(opt.defaultActionOnPaste);
+						}
+					} else {
+						insertHTML(html, event);
+					}
+
+					return false;
+				}
+			};
+
+			if (dt.types && Array.from(dt.types).indexOf('text/html') !== -1) {
+				const html = dt.getData(TEXT_HTML);
+				return processHTMLData(html);
+			}
+
+			if (event.type !== 'drop') {
+				const div = editor.create.div('', {
+					tabindex: -1,
+					contenteditable: true,
+					style: {
+						left: -9999,
+						top: 0,
+						width: 0,
+						height: '100%',
+						lineHeight: '140%',
+						overflow: 'hidden',
+						position: 'fixed',
+						zIndex: 2147483647,
+						wordBreak: 'break-all'
+					}
+				});
+
+				editor.container.appendChild(div);
+
+				const selData = editor.selection.save();
+
+				div.focus();
+				let tick: number = 0;
+
+				const removeFakeFocus = () => {
+					Dom.safeRemove(div);
+					editor.selection && editor.selection.restore(selData);
+				};
+
+				const waitData = () => {
+					tick += 1;
+
+					// If data has been processes by browser, process it
+					if (div.childNodes && div.childNodes.length > 0) {
+						const pastedData: string = div.innerHTML;
+
+						removeFakeFocus();
+
+						if (processHTMLData(pastedData) !== false) {
+							editor.selection.insertHTML(pastedData);
+						}
+
+						return;
+					}
+
+					if (tick < 5) {
+						editor.async.setTimeout(waitData, 20);
+					} else {
+						removeFakeFocus();
+					}
+				};
+
+				waitData();
+			}
+		}
+
+		if (dt.getData(TEXT_PLAIN)) {
+			return insertHTML(dt.getData(TEXT_PLAIN), event);
+		}
+	};
+
+	editor.events
+		.off('paste.paste')
+		.on('paste.paste', (event: ClipboardEvent | DragEvent):
+			| false
+			| void => {
 			/**
 			 * Triggered before pasting something into the Jodit Editor
 			 *
@@ -324,8 +484,10 @@ export function paste(editor: IJodit) {
 			 * });
 			 * ```
 			 */
-
-			if (editor.events.fire('beforePaste', event) === false) {
+			if (
+				beforePaste(event) === false ||
+				editor.events.fire('beforePaste', event) === false
+			) {
 				event.preventDefault();
 				return false;
 			}
@@ -342,7 +504,7 @@ export function paste(editor: IJodit) {
 						types_str += types[i] + ';';
 					}
 				} else {
-					types_str = types.toString() + ';';
+					types_str = (types || TEXT_PLAIN).toString() + ';';
 				}
 
 				const getText = () => {
@@ -411,10 +573,7 @@ export function paste(editor: IJodit) {
 							);
 						}
 
-						insertByType(
-							clipboard_html,
-							editor.options.defaultActionOnPaste
-						);
+						insertByType(clipboard_html, opt.defaultActionOnPaste);
 					}
 
 					event.preventDefault();
@@ -439,157 +598,22 @@ export function paste(editor: IJodit) {
 			if (editor.events.fire('afterPaste', event) === false) {
 				return false;
 			}
-		}
-	);
+		});
 
-	if (editor.options.askBeforePasteHTML) {
-		editor.events.on(
-			'beforePaste',
-			(event: ClipboardEvent | DragEvent): false | void => {
-				const dt = getDataTransfer(event);
-				if (event && dt && dt.getData(TEXT_PLAIN)) {
-					const html: string = dt.getData(TEXT_PLAIN);
-					return insertHTML(html, event);
-				}
-			}
-		);
-	}
-
-	if (editor.options.askBeforePasteFromWord) {
-		editor.events.on(
-			'beforePaste',
-			(event: ClipboardEvent): false | void => {
-				const dt = getDataTransfer(event);
-
-				if (event && dt && dt.getData && dt.getData(TEXT_HTML)) {
-					const processHTMLData = (html: string): void | false => {
-						const buffer = editor.buffer.get(clipboardPluginKey);
-
-						if (isHTML(html) && buffer !== trimFragment(html)) {
-							if (isHTMLFromWord(html)) {
-								clearOrKeep(
-									editor.i18n(
-										'The pasted content is coming from a Microsoft Word/Excel document. ' +
-											'Do you want to keep the format or clean it up?'
-									),
-
-									editor.i18n('Word Paste Detected'),
-									(agree: boolean | number) => {
-										if (agree === true) {
-											html = applyStyles(html);
-
-											if (
-												editor.options.beautifyHTML &&
-												(editor.ownerWindow as any)
-													.html_beautify
-											) {
-												html = (editor.ownerWindow as any).html_beautify(
-													html
-												);
-											}
-										}
-
-										if (agree === false) {
-											html = cleanFromWord(html);
-										}
-
-										if (agree === 0) {
-											html = stripTags(
-												cleanFromWord(html)
-											);
-										}
-
-										editor.selection.insertHTML(html);
-										editor.setEditorValue();
-									}
-								);
-							} else {
-								insertHTML(html, event);
-							}
-							return false;
-						}
-					};
-
-					if (
-						dt.types &&
-						Array.from(dt.types).indexOf('text/html') !== -1
-					) {
-						const html: string = dt.getData(TEXT_HTML);
-						return processHTMLData(html);
-					}
-
-					if (event.type !== 'drop') {
-						const div = editor.create.div('', {
-							tabindex: -1,
-							contenteditable: true,
-							style: {
-								left: -9999,
-								top: 0,
-								width: 0,
-								height: '100%',
-								lineHeight: '140%',
-								overflow: 'hidden',
-								position: 'fixed',
-								zIndex: 2147483647,
-								wordBreak: 'break-all'
-							}
-						});
-
-						editor.container.appendChild(div);
-
-						const selData = editor.selection.save();
-
-						div.focus();
-						let tick: number = 0;
-
-						const removeFakeFocus = () => {
-							Dom.safeRemove(div);
-							editor.selection &&
-								editor.selection.restore(selData);
-						};
-
-						const waitData = () => {
-							tick += 1;
-
-							// If data has been processes by browser, process it
-							if (div.childNodes && div.childNodes.length > 0) {
-								const pastedData: string = div.innerHTML;
-
-								removeFakeFocus();
-
-								if (processHTMLData(pastedData) !== false) {
-									editor.selection.insertHTML(pastedData);
-								}
-
-								return;
-							}
-
-							if (tick < 5) {
-								setTimeout(waitData, 20);
-							} else {
-								removeFakeFocus();
-							}
-						};
-
-						waitData();
+	if (opt.nl2brInPlainText) {
+		editor.events
+			.off('processPaste.paste')
+			.on(
+				'processPaste.paste',
+				(
+					event: ClipboardEvent,
+					text: string,
+					type: string
+				): string | void => {
+					if (type === TEXT_PLAIN + ';' && !isHTML(text)) {
+						return nl2br(text);
 					}
 				}
-			}
-		);
-	}
-
-	if (editor.options.nl2brInPlainText) {
-		editor.events.on(
-			'processPaste',
-			(
-				event: ClipboardEvent,
-				text: string,
-				type: string
-			): string | void => {
-				if (type === TEXT_PLAIN + ';' && !isHTML(text)) {
-					return nl2br(text);
-				}
-			}
-		);
+			);
 	}
 }

@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 /**
@@ -16,19 +16,24 @@
  * @param a2
  * @param a3
  */
-export const setTimeout = <T1, T2, T3>(
-	callback: (a1?: T1, a2?: T2, a3?: T3) => any,
+export function setTimeout<T = any>(
+	callback: (...args: T[]) => void,
 	timeout: number,
-	a1?: T1,
-	a2?: T2,
-	a3?: T3
-): number => {
+	...args: T[]
+): number {
 	if (!timeout) {
-		callback.call(null, a1, a2, a3);
+		callback.call(null, ...args);
 	} else {
-		// @ts-ignore
-		return window.setTimeout.call(window, callback, timeout, a1, a2, a3);
+		return window.setTimeout(callback, timeout, ...args);
 	}
 
 	return 0;
-};
+}
+
+/**
+ * Clear timeout
+ * @param timer
+ */
+export function clearTimeout(timer: number) {
+	window.clearTimeout(timer);
+}

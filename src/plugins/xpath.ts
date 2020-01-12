@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { Config } from '../Config';
@@ -105,22 +105,10 @@ export class xpath extends Plugin {
 		name: string,
 		title: string
 	): HTMLElement => {
-		const li: HTMLLIElement = this.jodit.create.fromHTML(
-			'<li>' +
-				'<a ' +
-				'role="button" ' +
-				'data-path="' +
-				path +
-				'" ' +
-				'href="javascript:void(0)" ' +
-				'title="' +
-				title +
-				'" ' +
-				'tabindex="-1"' +
-				'>' +
-			trim(name) +
-				'</a>' +
-				'</li>'
+		const li = this.jodit.create.fromHTML(
+			`<li><a role="button" data-path="${path}" href="javascript:void(0)" title="${title}" tabindex="-1"'>${trim(
+				name
+			)}</a></li>`
 		) as HTMLLIElement;
 
 		const a = li.firstChild as HTMLAnchorElement;
@@ -139,6 +127,7 @@ export class xpath extends Plugin {
 			delete this.selectAllButton;
 		}
 	};
+
 	private appendSelectAll = () => {
 		this.removeSelectAll();
 		this.selectAllButton = new ToolbarButton(this.jodit, <
@@ -208,21 +197,23 @@ export class xpath extends Plugin {
 		this.jodit.defaultTimeout * 2
 	);
 
-	public container: HTMLElement | null = null;
-	public menu: ContextMenu | null = null;
+	container: HTMLElement;
+	menu: ContextMenu | null = null;
 
 	afterInit() {
 		if (this.jodit.options.showXPathInStatusbar) {
 			this.container = this.jodit.create.element('ul');
 			this.container.classList.add('jodit_xpath');
-			this.jodit.statusbar.append(this.container);
 
 			this.jodit.events
+				.off('.xpath')
 				.on(
 					'mouseup.xpath change.xpath keydown.xpath changeSelection.xpath',
 					this.calcPath
 				)
-				.on('afterSetMode.xpath afterInit.xpath', () => {
+				.on('afterSetMode.xpath afterInit.xpath changePlace.xpath', () => {
+					this.jodit.statusbar.append(this.container);
+
 					if (this.jodit.getRealMode() === MODE_WYSIWYG) {
 						this.calcPath();
 					} else {
@@ -247,7 +238,7 @@ export class xpath extends Plugin {
 		this.menu && this.menu.destruct();
 		Dom.safeRemove(this.container);
 
-		this.menu = null;
-		this.container = null;
+		delete this.menu;
+		delete this.container;
 	}
 }

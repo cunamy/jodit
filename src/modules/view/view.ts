@@ -4,15 +4,16 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
-import { IDictionary, IEventsNative } from '../../types';
+import { IAsync, IComponent, IDictionary, IEventsNative, IProgressBar } from '../../types';
 import { IViewBased, IViewOptions } from '../../types/view';
 import { Component } from '../Component';
 import { EventsNative } from '../events/eventsNative';
 import { Panel } from './panel';
 import { Storage } from '../storage';
+import { i18n } from '../../modules/helpers';
 
 declare let appVersion: string;
 
@@ -21,6 +22,26 @@ export class View extends Panel implements IViewBased {
 	 * @property{string} ID attribute for source element, id add {id}_editor it's editor's id
 	 */
 	id: string;
+
+	markOwner(elm: HTMLElement): void {
+		elm.setAttribute('data-editor_id', this.id);
+	}
+
+
+	workplace: HTMLDivElement;
+
+	components: Set<IComponent> = new Set();
+
+	/**
+	 * Get path for loading extra staff
+	 */
+	get basePath(): string {
+		if (this.options.basePath) {
+			return this.options.basePath;
+		}
+
+		return BASE_PATH;
+	}
 
 	version: string = appVersion; // from webpack.config.js
 
@@ -47,29 +68,21 @@ export class View extends Panel implements IViewBased {
 	/**
 	 * progress_bar Progress bar
 	 */
-	public progress_bar: HTMLDivElement = this.create.div(
-		'jodit_progress_bar',
-		this.create.div()
-	);
+	progressbar: IProgressBar = new ProgressBar(this);
 
-	public options: IViewOptions = {
-		removeButtons: [],
-		zIndex: 100002,
-		fullsize: false,
-		showTooltip: true,
-		useNativeTooltip: false,
-		buttons: [],
-		globalFullsize: true
-	};
+	options: IViewOptions;
 
-	public events: IEventsNative;
+	events: IEventsNative;
+	async : IAsync = new Async();
 
-	public components: any = [];
-
+	/**
+	 * Internationalization method. Uses Jodit.lang object
+	 *
+	 * @param text
+	 * @param params
+	 */
 	i18n(text: string, ...params: Array<string | number>): string {
-		return this.jodit && this.jodit !== this
-			? this.jodit.i18n(text, ...params)
-			: Jodit.prototype.i18n(text, ...params);
+		return i18n(text, params, this?.jodit?.options || this?.options);
 	}
 
 	/**
@@ -84,7 +97,7 @@ export class View extends Panel implements IViewBased {
 		}
 	}
 
-	public getInstance<T = Component>(moduleName: string, options?: object): T {
+	getInstance<T = Component>(moduleName: string, options?: object): T {
 		if (typeof Jodit.modules[moduleName] !== 'function') {
 			throw new Error('Need real module name');
 		}
@@ -109,22 +122,32 @@ export class View extends Panel implements IViewBased {
 		return this.version;
 	};
 
-	constructor(jodit?: IViewBased, options?: IViewOptions) {
-		super(jodit);
+	/** @override */
+	protected initOptions(options?: IViewOptions): void {
+		super.initOptions({
+			extraButtons: [],
+			textIcons: false,
+			removeButtons: [],
+			zIndex: 100002,
+			fullsize: false,
+			showTooltip: true,
+			useNativeTooltip: false,
+			buttons: [],
+			globalFullsize: true,
+			...options
+		});
+	}
 
-		this.id =
-			jodit && jodit.id ? jodit.id : new Date().getTime().toString();
+	constructor(jodit?: IViewBased, options?: IViewOptions) {
+		super(jodit, options);
+
+		this.id = jodit?.id || new Date().getTime().toString();
 
 		this.jodit = jodit || this;
 
-		this.events =
-			jodit && jodit.events
-				? jodit.events
-				: new EventsNative(this.ownerDocument);
+		this.events = jodit?.events || new EventsNative(this.ownerDocument);
 
-		this.buffer = jodit && jodit.buffer ? jodit.buffer : Storage.makeStorage();
-
-		this.options = { ...this.options, ...options };
+		this.buffer = jodit?.buffer || Storage.makeStorage();
 	}
 
 	destruct() {
@@ -132,15 +155,21 @@ export class View extends Panel implements IViewBased {
 			return;
 		}
 
+		if (this.async) {
+			this.async.destruct();
+			delete this.async;
+		}
+
 		if (this.events) {
 			this.events.destruct();
 			delete this.events;
 		}
-
-		delete this.options;
 
 		super.destruct();
 	}
 }
 
 import { Jodit } from '../../Jodit';
+import { BASE_PATH } from '../../constants';
+import { Async } from '../Async';
+import { ProgressBar } from '../ProgressBar';

@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { $$, debounce } from '../modules/helpers/';
@@ -19,7 +19,7 @@ const JODIT_IMAGE_PROCESSOR_BINDED = '__jodit_imageprocessor_binded';
  */
 export function imageProcessor(editor: IJodit) {
 	editor.events.on(
-		'change afterInit',
+		'change afterInit changePlace',
 		debounce(() => {
 			if (editor.editor) {
 				$$('img', editor.editor).forEach((elm: HTMLElement) => {
@@ -39,6 +39,7 @@ export function imageProcessor(editor: IJodit) {
 								}
 							);
 						}
+
 						editor.events.on(elm, 'mousedown touchstart', () => {
 							editor.selection.select(elm);
 						});

@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { Config } from '../Config';
@@ -195,7 +195,7 @@ export class Ajax implements IAjax {
 				}
 
 				if (this.options.headers && this.xhr.setRequestHeader) {
-					each(this.options.headers, (key: string, value: string) => {
+					each(this.options.headers, (key, value) => {
 						this.xhr.setRequestHeader(key, value);
 					});
 				}

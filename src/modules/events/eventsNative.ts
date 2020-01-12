@@ -1,7 +1,7 @@
 /*!
  * Jodit Editor (https://xdsoft.net/jodit/)
  * License GNU General License version 2 or later;
- * Copyright 2013-2019 Valeriy Chupurnov https://xdsoft.net
+ * Copyright 2013-2020 Valeriy Chupurnov https://xdsoft.net
  */
 
 /**
@@ -13,7 +13,7 @@ import { defaultNameSpace, EventHandlersStore } from './store';
 import { IEventsNative } from '../../types/events';
 
 export class EventsNative implements IEventsNative {
-	private __key: string = '__JoditEventsNativeNamespaces';
+	readonly __key: string = '__JoditEventsNativeNamespaces';
 
 	private doc: Document = document;
 
@@ -35,6 +35,10 @@ export class EventsNative implements IEventsNative {
 	}
 
 	private getStore(subject: any): EventHandlersStore {
+		if (!subject) {
+			throw new Error('Need subject');
+		}
+
 		if (subject[this.__key] === undefined) {
 			const store: EventHandlersStore = new EventHandlersStore();
 

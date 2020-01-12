@@ -4,17 +4,27 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
-import { IViewWithToolbar } from './view';
+import { IViewOptions, IViewWithToolbar } from './view';
 import { Config } from '../Config';
 import { Observer } from '../modules/observer/observer';
 import { Select } from '../modules/Selection';
-import { CustomCommand, IStorage, Modes } from './';
-import { StatusBar } from '../modules/StatusBar';
+import { CustomCommand, IStatusBar, IStorage, Modes } from './';
 import { IUploader } from './uploader';
 import { IFileBrowser } from './fileBrowser';
+
+interface IWorkPlace {
+	editor: HTMLDivElement | HTMLBodyElement;
+	element: HTMLElement;
+	container: HTMLDivElement;
+	workplace: HTMLDivElement;
+	statusbar: IStatusBar;
+	iframe?: HTMLIFrameElement | void;
+	editorWindow: Window;
+	observer: Observer;
+}
 
 interface IJodit extends IViewWithToolbar {
 	isJodit: true;
@@ -27,6 +37,12 @@ interface IJodit extends IViewWithToolbar {
 	getNativeEditorValue(): string;
 	getEditorValue(removeSelectionMarkers?: boolean): string;
 	setEditorValue(value?: string): void;
+
+	places: IWorkPlace[];
+	currentPlace: IWorkPlace;
+	addPlace(source: HTMLElement | string, options?: IViewOptions): void;
+	setCurrentPlace(place: IWorkPlace): void;
+
 	value: string;
 
 	/**
@@ -60,7 +76,7 @@ interface IJodit extends IViewWithToolbar {
 	isEditorMode(): boolean;
 	toggleMode(): void;
 
-	isInited: boolean;
+	editorIsActive: boolean;
 
 	execCommand(command: string, showUI?: any, value?: null | any): any;
 
@@ -81,9 +97,11 @@ interface IJodit extends IViewWithToolbar {
 	 */
 	workplace: HTMLDivElement;
 
-	statusbar: StatusBar;
+	statusbar: IStatusBar;
 
 	uploader: IUploader;
 	filebrowser: IFileBrowser;
 	storage: IStorage;
+
+	iframe?: HTMLIFrameElement | void;
 }

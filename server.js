@@ -1,7 +1,16 @@
 const webpack = require('webpack');
 const webpackDevMiddleware = require('webpack-dev-middleware');
 const webpackHotMiddleware = require('webpack-hot-middleware');
-const config = require('./webpack.config')();
+const fs = require('fs');
+const gulptasks = require('./gulpfile');
+
+const config = require('./webpack.config')([], {
+	es: 'es5',
+	isTest: true
+});
+
+gulptasks.watch();
+
 const compression = require('compression');
 const app = new (require('express'))();
 
@@ -19,7 +28,7 @@ app.use(webpackDevMiddleware(compiler, {
 
 app.use(webpackHotMiddleware(compiler));
 
-app.get("/", function(req, res) {
+app.get("/", (req, res) => {
     res.sendFile(__dirname + '/index.html')
 });
 
@@ -31,14 +40,22 @@ app.get("/icons.html", function(req, res) {
 	res.sendFile(__dirname + '/icons.html')
 });
 
-app.get("/test.html", function(req, res) {
+app.get("/test.html", (req, res) => {
     res.sendFile(__dirname + '/test.html')
 });
-app.get("/fake.html", function(req, res) {
+
+app.get("/fake.html", (req, res) => {
     res.sendFile(__dirname + '/fake.html')
 });
-app.get("/build/jodit.*", function(req, res) {
-    res.sendFile(__dirname + '/' + req.url)
+
+app.get("/build/*.*", (req, res) => {
+	const filename = __dirname + '/' + req.url;
+
+	if (fs.existsSync(filename)) {
+		res.sendFile(filename)
+	} else {
+		res.status(404).send('Not Found');
+	}
 });
 
 app.use('/node_modules', require('express').static(__dirname + '/node_modules'));

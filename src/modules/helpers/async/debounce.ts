@@ -4,11 +4,11 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { CallbackFunction } from '../../../types';
-import { setTimeout } from './setTimeout';
+import { setTimeout, clearTimeout } from './setTimeout';
 
 /**
  * Debouncing enforces that a function not be called again until a certain amount of time has passed without
@@ -28,10 +28,11 @@ import { setTimeout } from './setTimeout';
  * }, 100));
  * ```
  */
+
 export const debounce = function<T>(
     this: T,
     fn: CallbackFunction<T>,
-    timeout?: number,
+    timeout: number,
     invokeAsap?: boolean,
     ctx?: T
 ) {

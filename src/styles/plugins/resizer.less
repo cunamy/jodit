@@ -4,14 +4,14 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 [data-jodit_iframe_wrapper] {
 	display: block;
-	clear: both;
 	user-select: none;
 	position: relative;
+
 	&:after {
 		position: absolute;
 		content: '';
@@ -25,40 +25,50 @@
 		background: rgba(0, 0, 0, 0);
 	}
 }
+
 .jodit_resizer {
 	width: 100px;
 	height: 100px;
 	position: absolute;
 	border: 1px solid @color-border-resize;
-	top: 0px;
-	left: 0px;
+	top: 0;
+	left: 0;
 	display: none;
 	pointer-events: none;
 	font-size: 0;
+
 	* {
 		box-sizing: border-box;
 	}
+
 	@viewer_width: 70px;
 	@viewer_height: 24px;
+
 	> span {
 		position: absolute;
-		display: inline-block;
-		opacity: 0;
-		transition: opacity 0.2s linear;
 		left: 50%;
 		top: 50%;
+
+		display: inline-block;
 		height: @viewer_height;
-		line-height: @viewer_height;
-		font-size: 12px;
 		width: @viewer_width;
+		max-width: 100%;
+
 		margin-left: -@viewer_width / 2;
 		margin-top: -@viewer_height / 2;
+
+		line-height: @viewer_height;
+		font-size: 12px;
 		text-align: center;
-		overflow: visible;
+
 		color: @color-white;
 		background-color: @color-placeholder;
-		max-width: 100%;
+		opacity: 0;
+
+		transition: opacity 0.2s linear;
+		overflow: visible;
 	}
+
 	> i {
 		position: absolute;
 		display: inline-block;
@@ -76,21 +86,25 @@
 		.handleSizes(@size-resizer-handle) {
 			width: @size-resizer-handle;
 			height: @size-resizer-handle;
+
 			&:nth-child(1) {
 				left: -@size-resizer-handle / 2;
 				top: -@size-resizer-handle / 2;
 				cursor: nw-resize;
 			}
+
 			&:nth-child(2) {
 				right: -@size-resizer-handle / 2;
 				top: -@size-resizer-handle / 2;
 				cursor: ne-resize;
 			}
+
 			&:nth-child(3) {
 				right: -@size-resizer-handle / 2;
 				bottom: -@size-resizer-handle / 2;
 				cursor: se-resize;
 			}
+
 			&:nth-child(4) {
 				left: -@size-resizer-handle / 2;
 				bottom: -@size-resizer-handle / 2;

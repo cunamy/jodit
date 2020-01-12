@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import * as consts from '../constants';
@@ -18,9 +18,11 @@ import { IJodit } from '../types';
  * @param {Jodit} editor
  */
 export function tableKeyboardNavigation(editor: IJodit) {
-	editor.events.on(
-		'keydown',
-		(event: KeyboardEvent): false | void => {
+	editor.events
+		.off('.tableKeyboardNavigation')
+		.on('keydown.tableKeyboardNavigation', (event: KeyboardEvent):
+			| false
+			| void => {
 			let current: Element, block: HTMLElement;
 
 			if (
@@ -173,6 +175,5 @@ export function tableKeyboardNavigation(editor: IJodit) {
 				}
 				return false;
 			}
-		}
-	);
+		});
 }

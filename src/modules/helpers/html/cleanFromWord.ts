@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { Dom } from '../../Dom';
@@ -26,7 +26,7 @@ export const cleanFromWord = (html: string): string => {
     let convertedString: string = '';
 
     try {
-        const div: HTMLDivElement = document.createElement('div');
+        const div = document.createElement('div');
         div.innerHTML = html;
 
         const marks: Node[] = [];

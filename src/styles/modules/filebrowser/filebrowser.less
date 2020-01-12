@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 @import (reference) '../../variables';
 
@@ -76,6 +76,10 @@
 		vertical-align: top;
 		height: 100%;
 		position: relative;
+
+		.jodit_button {
+			border-radius: 0;
+		}
 
 		&.active {
 			display: flex;
@@ -190,33 +194,6 @@
 				}
 			}
 		}
-
-		.jodit_button {
-			cursor: pointer;
-			background: #696969;
-			text-align: center;
-			width: auto;
-			height: 38px;
-			color: #969696;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			font-size: 14px;
-
-			svg {
-				margin: 0 5px;
-				fill: #969696;
-			}
-
-			&:not(.disabled):hover {
-				background-color: @color-background-button-hover;
-			}
-
-			&.disabled,
-			&:hover i {
-				opacity: 0.7;
-			}
-		}
 	}
 
 	@col_size: 150px;
@@ -250,13 +227,16 @@
 			width: @col_size;
 			height: @col_size;
 
+			display: flex;
+			justify-content: center;
+			align-items: center;
+
 			@media (max-width: @screen-xs) {
 				width: calc(50% - 10px);
 			}
 
-			line-height: @col_size;
 			text-align: center;
-			border: 1px solid #ccc;
+			border: 1px solid @color-border;
 			margin: 5px;
 			font-size: 0;
 			overflow: hidden;
@@ -265,7 +245,6 @@
 
 			img {
 				max-width: 100%;
-				vertical-align: middle;
 			}
 
 			&:hover {
@@ -423,6 +402,8 @@
 	}
 
 	&.jodit_filebrowser_title_box {
+		display: flex;
+		align-items: center;
 		padding-left: @padding-default;
 	}
 }

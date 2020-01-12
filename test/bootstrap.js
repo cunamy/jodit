@@ -1,4 +1,5 @@
 typeof window.chai !== 'undefined' && (chai.config.includeStack = true);
+typeof window.mocha !== 'undefined' && mocha.timeout(15000);
 
 const oldI18n = Jodit.prototype.i18n,
 	oldAjaxSender = Jodit.modules.Ajax.prototype.send,
@@ -155,18 +156,10 @@ function mockAjax() {
 						break;
 					case 'getLocalFileByUrl':
 						switch (ajax.options.data.url) {
-							case location.protocol +
-								'//' +
-								location.host +
-								'/tests/artio.jpg':
-							case location.protocol +
-								'//' +
-								location.host +
-								'/test/tests/artio.jpg':
-							case location.protocol +
-								'//' +
-								location.host +
-								'/jodit/test/tests/artio.jpg':
+							case location.protocol + '//' + location.host + '/artio.jpg':
+							case location.protocol + '//' + location.host + '/tests/artio.jpg':
+							case location.protocol + '//' + location.host + '/test/tests/artio.jpg':
+							case location.protocol + '//' + location.host + '/jodit/test/tests/artio.jpg':
 							case 'https://xdsoft.net/jodit/files/th.jpg':
 								resolve({
 									success: true,
@@ -224,6 +217,7 @@ const excludeI18nKeys = ['adddate'];
 
 Jodit.prototype.i18n = function(key) {
 	excludeI18nKeys.indexOf(key) === -1 &&
+
 	i18nkeys.indexOf(key) === -1 &&
 		key.indexOf('<svg') === -1 &&
 		i18nkeys.push(key);
@@ -233,15 +227,13 @@ Jodit.prototype.i18n = function(key) {
 
 Jodit.defaultOptions.filebrowser.saveStateInStorage = false;
 
-// Jodit.defaultOptions.disablePlugins = ['source'];
-
 Jodit.defaultOptions.observer.timeout = 0;
 if (Jodit.defaultOptions.cleanHTML) {
 	Jodit.defaultOptions.cleanHTML.timeout = 0;
 	Jodit.defaultOptions.cleanHTML.fillEmptyParagraph = false;
 }
 
-Jodit.defaultOptions.useAceEditor = false;
+Jodit.defaultOptions.sourceEditor = 'area';
 Jodit.defaultOptions.language = 'en';
 Jodit.defaultOptions.iframeCSSLinks.push('/app.css');
 Jodit.defaultOptions.iframeStyle +=
@@ -326,10 +318,18 @@ function appendTestArea(id, noput) {
 	const textarea = document.createElement('textarea');
 	textarea.setAttribute('id', id || 'editor_' + new Date().getTime());
 	box.appendChild(textarea);
+
 	!noput && stuff.push(textarea);
 	return textarea;
 }
 
+/**
+ * Create empty DIV block and but it inside Box
+ *
+ * @param [id]
+ * @param [noput]
+ * @returns {HTMLDivElement}
+ */
 function appendTestDiv(id, noput) {
 	const textarea = document.createElement('div');
 	textarea.setAttribute('id', id || 'editor_' + new Date().getTime());
@@ -525,11 +525,58 @@ function simulateEvent(type, keyCodeArg, element, options) {
 			changedTouches[key] = evt[key];
 		});
 
+
 		evt.changedTouches = changedTouches;
 	}
 
 	element.dispatchEvent(evt);
 }
+
+/**
+ * Set listener and remove it after first call
+ *
+ * @param {string} event
+ * @param {HTMLElement} element
+ * @param {Function} callback
+ */
+function one(event, element, callback) {
+	const on = function () {
+		element.removeEventListener(event, on);
+		callback.apply(element, arguments);
+	};
+
+	element.addEventListener(event, on);
+}
+
+/**
+ * Set one handler for load image
+ *
+ * @param {HTMLImageElement} image
+ * @param {Function} callback
+ */
+function onLoadImage(image, callback) {
+	if (!image.complete) {
+		one('load', image, callback);
+	} else {
+		callback.apply(image);
+	}
+}
+
+/**
+ *
+ * @param element
+ * @param pastedText
+ */
+function simulatePaste(element, pastedText) {
+	simulateEvent('paste', 0, element, function(data) {
+		data.clipboardData = {
+			types: ['text/html'],
+			getData: function() {
+				return pastedText;
+			}
+		};
+	});
+};
 
 function setCursor(elm, inEnd) {
 	const range = document.createRange();
@@ -541,12 +588,14 @@ function setCursor(elm, inEnd) {
 
 function createPoint(x, y, color) {
 	const div = document.createElement('div');
+
 	div.setAttribute(
 		'style',
 		'position: absolute; z-index: 1000000000;width: 5px; height: 5px; background: ' +
 			(color || 'red') +
 			';'
 	);
+
 	div.style.left = parseInt(x, 10) + 'px';
 	div.style.top = parseInt(y, 10) + 'px';
 
@@ -557,6 +606,7 @@ function offset(el) {
 	const rect = el.getBoundingClientRect(),
 		scrollLeft = window.pageXOffset || document.documentElement.scrollLeft,
 		scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
 	return {
 		top: rect.top + scrollTop,
 		left: rect.left + scrollLeft,

@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { Config } from '../Config';
@@ -73,7 +73,17 @@ Config.prototype.controls.dots = {
 				}
 			};
 
-			store.container.style.width = '100px';
+			let w = 32;
+
+			const size = editor.options.toolbarButtonSize;
+
+			if (size === 'large') {
+				w = 36;
+			} else if (size === 'small') {
+				w = 24;
+			}
+
+			store.container.style.width = w * 3 + 'px';
 
 			control.data = store;
 		}
@@ -107,50 +117,54 @@ export function mobile(editor: IJodit) {
 				}
 			}
 		})
-		.on(
-			'getDiffButtons.mobile',
-			(toolbar: IToolbarCollection): void | string[] => {
-				if (toolbar === editor.toolbar) {
-					return splitArray(editor.options.buttons).filter(
-						(i: string | IControlType) => {
-							return store.indexOf(i) < 0;
-						}
-					);
-				}
-			}
-		);
-
-	if (editor.options.toolbarAdaptive) {
-		editor.events.on('resize afterInit', () => {
-			if (!editor.options.toolbar) {
-				return;
-			}
-
-			const width: number = editor.container.offsetWidth;
-
-			let newStore: Array<string | IControlType> = [];
-
-			if (width >= editor.options.sizeLG) {
-				newStore = splitArray(editor.options.buttons);
-
-			} else if (width >= editor.options.sizeMD) {
-				newStore = splitArray(editor.options.buttonsMD);
-
-			} else if (width >= editor.options.sizeSM) {
-				newStore = splitArray(editor.options.buttonsSM);
-
-			} else {
-				newStore = splitArray(editor.options.buttonsXS);
-			}
-
-			if (newStore.toString() !== store.toString()) {
-				store = newStore;
-
-				editor.toolbar.build(
-					store.concat(editor.options.extraButtons),
-					editor.container
+		.on('getDiffButtons.mobile', (toolbar: IToolbarCollection):
+			| void
+			| string[] => {
+			if (toolbar === editor.toolbar) {
+				return splitArray(editor.options.buttons).filter(
+					(i: string | IControlType) => {
+						return store.indexOf(i) < 0;
+					}
 				);
 			}
 		});
+
+	if (editor.options.toolbarAdaptive) {
+		editor.events
+			.on(
+				'resize afterInit recalcAdaptive changePlace afterAddPlace',
+				() => {
+					if (!editor.options.toolbar) {
+						return;
+					}
+
+					const width: number = editor.container.offsetWidth;
+
+					let newStore: Array<string | IControlType> = [];
+
+					if (width >= editor.options.sizeLG) {
+						newStore = splitArray(editor.options.buttons);
+					} else if (width >= editor.options.sizeMD) {
+						newStore = splitArray(editor.options.buttonsMD);
+					} else if (width >= editor.options.sizeSM) {
+						newStore = splitArray(editor.options.buttonsSM);
+					} else {
+						newStore = splitArray(editor.options.buttonsXS);
+					}
+
+					if (newStore.toString() !== store.toString()) {
+						store = newStore;
+
+						editor.toolbar.build(
+							store.concat(editor.options.extraButtons),
+							editor.toolbar.container.parentElement ||
+								editor.toolbar.getParentContainer()
+						);
+					}
+				}
+			)
+			.on(editor.ownerWindow, 'load', () =>
+				editor.events.fire('recalcAdaptive')
+			);
 	}
 }

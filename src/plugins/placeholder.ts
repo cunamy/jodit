@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { Config } from '../Config';
@@ -70,42 +70,45 @@ export function placeholder(this: any, editor: IJodit) {
 		return;
 	}
 
-	(this as any).destruct = () => {
-		Dom.safeRemove(placeholderElm);
-	};
-
 	const show = () => {
-			if (!placeholderElm.parentNode || editor.options.readonly) {
+			if (editor.options.readonly) {
 				return;
 			}
 
 			let marginTop: number = 0,
 				marginLeft: number = 0;
 
-			const style: CSSStyleDeclaration = editor.editorWindow.getComputedStyle(
+			const style = editor.editorWindow.getComputedStyle(
 				editor.editor
 			);
+
+			editor.workplace.appendChild(placeholderElm);
 
 			if (
 				editor.editor.firstChild &&
 				editor.editor.firstChild.nodeType === Node.ELEMENT_NODE
 			) {
-				const style2: CSSStyleDeclaration = editor.editorWindow.getComputedStyle(
+				const style2 = editor.editorWindow.getComputedStyle(
 					editor.editor.firstChild as Element
 				);
+
 				marginTop = parseInt(style2.getPropertyValue('margin-top'), 10);
+
 				marginLeft = parseInt(
 					style2.getPropertyValue('margin-left'),
 					10
 				);
+
 				placeholderElm.style.fontSize =
 					parseInt(style2.getPropertyValue('font-size'), 10) + 'px';
+
 				placeholderElm.style.lineHeight = style2.getPropertyValue(
 					'line-height'
 				);
 			} else {
 				placeholderElm.style.fontSize =
 					parseInt(style.getPropertyValue('font-size'), 10) + 'px';
+
 				placeholderElm.style.lineHeight = style.getPropertyValue(
 					'line-height'
 				);
@@ -123,34 +126,32 @@ export function placeholder(this: any, editor: IJodit) {
 				)
 			});
 		},
-		hide = () => {
-			if (placeholderElm.parentNode) {
-				placeholderElm.style.display = 'none';
-			}
+		hide = (): void => {
+			Dom.safeRemove(placeholderElm);
 		},
 		toggle = debounce(() => {
-			if (placeholderElm.parentNode === null) {
-				return;
-			}
-
-			if (!editor.editor) {
+			if (!editor.editor || editor.isInDestruct) {
 				return;
 			}
 
 			if (editor.getRealMode() !== consts.MODE_WYSIWYG) {
-				return hide();
+				hide();
+				return;
 			}
 
-			const value: string = editor.getEditorValue();
+			const value = editor.value;
 
-			if (value && !/^<(p|div|h[1-6])><\/\1>$/.test(value)) {
+			if (
+				value.trim().length &&
+				!/^<(p|div|h[1-6])><\/\1>$/.test(value)
+			) {
 				hide();
 			} else {
 				show();
 			}
 		}, editor.defaultTimeout / 10);
 
-	const placeholderElm: HTMLElement = editor.create.fromHTML(
+	const placeholderElm = editor.create.fromHTML(
 		'<span style="display: none;" class="jodit_placeholder">' +
 			editor.i18n(editor.options.placeholder) +
 			'</span>'
@@ -161,14 +162,6 @@ export function placeholder(this: any, editor: IJodit) {
 		placeholderElm.style.direction = 'rtl';
 	}
 
-	if (
-		editor.options.useInputsPlaceholder &&
-		editor.element.hasAttribute('placeholder')
-	) {
-		placeholderElm.innerHTML =
-			editor.element.getAttribute('placeholder') || '';
-	}
-
 	editor.events
 		.on('readonly', (isReadOnly: boolean) => {
 			if (isReadOnly) {
@@ -177,15 +170,27 @@ export function placeholder(this: any, editor: IJodit) {
 				toggle();
 			}
 		})
-		.on('afterInit', () => {
-			editor.workplace.appendChild(placeholderElm);
+		.on('beforeDestruct', () => {
+			Dom.safeRemove(placeholderElm);
+			editor.events.off('.placeholder').off(window, 'load', toggle);
+		})
+		.on('afterInit changePlace', () => {
+			if (
+				editor.options.useInputsPlaceholder &&
+				editor.element.hasAttribute('placeholder')
+			) {
+				placeholderElm.innerHTML =
+					editor.element.getAttribute('placeholder') || '';
+			}
 
 			toggle();
 
 			editor.events.fire('placeholder', placeholderElm.innerHTML);
 			editor.events
+				.off('.placeholder')
 				.on(
-					'change keyup mouseup keydown mousedown afterSetMode',
+					'change.placeholder keyup.placeholder mouseup.placeholder keydown.placeholder ' +
+						'mousedown.placeholder afterSetMode.placeholder',
 					toggle
 				)
 				.on(window, 'load', toggle);

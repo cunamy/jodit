@@ -4,17 +4,17 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { IComponent, IDictionary } from './types';
 
 interface IUploaderData {
 	messages?: string[];
-	files?: string[];
+	files: string[];
 	isImages?: boolean[];
 	path?: string;
-	baseurl?: string;
+	baseurl: string;
 	newfilename?: string;
 }
 

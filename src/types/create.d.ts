@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { IDictionary } from './types';
@@ -16,8 +16,6 @@ export type Children = string | Array<string | Node> | Node;
 
 interface ICreate {
 	inside: ICreate;
-
-	setDocument(doc: Document): void;
 
 	element<K extends keyof HTMLElementTagNameMap>(
 		tagName: K,
@@ -74,8 +72,9 @@ interface ICreate {
 	 * Create DOM element from HTML text
 	 *
 	 * @param {string} html
+	 * @param {Object} refs
 	 *
 	 * @return HTMLElement
 	 */
-	fromHTML(html: string): HTMLElement;
+	fromHTML(html: string, refs?: IDictionary<boolean>): HTMLElement;
 }

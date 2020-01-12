@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { Dialog } from './dialog';
@@ -33,7 +33,7 @@ export const Confirm = (
 ): Dialog => {
 	const dialog = new Dialog(),
 		$div: HTMLDivElement = dialog.create.fromHTML(
-			'<form class="jodit_promt"></form>'
+			'<form class="jodit_prompt"></form>'
 		) as HTMLDivElement,
 		$label: HTMLLabelElement = dialog.create.element('label');
 

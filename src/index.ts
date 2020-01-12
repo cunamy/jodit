@@ -4,22 +4,22 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import './styles/bundle.less';
 
 declare function require(moduleName: string): any;
 
-// for SSR
-if (typeof window !== 'undefined') {
+if (process.env.TARGET_ES !== 'es2018' && typeof window !== 'undefined') {
 	require('./polyfills');
 }
 
 import { Jodit as DefaultJodit } from './Jodit';
 
+import Languages from './langs/index';
+
 import * as consts from './constants';
-import * as Languages from './langs/index';
 import * as Modules from './modules/index';
 import * as Plugins from './plugins/index';
 import * as Icons from './styles/icons/index';
@@ -38,7 +38,7 @@ const esFilter = (key: string): boolean => key !== '__esModule';
 Object.keys(Icons)
 	.filter(esFilter)
 	.forEach((key: string) => {
-		ToolbarIcon.icons[key.replace('_', '-')] = (Icons as any)[key];
+		ToolbarIcon.setIcon(key.replace('_', '-'), (Icons as any)[key]);
 	});
 
 // Modules
@@ -56,7 +56,7 @@ Object.keys(Modules)
 Object.keys(Plugins)
 	.filter(esFilter)
 	.forEach((key: string) => {
-		DefaultJodit.plugins[key] = (Plugins as any)[key];
+		DefaultJodit.plugins.add(key, (Plugins as any)[key]);
 	});
 
 // Languages

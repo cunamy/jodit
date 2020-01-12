@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import * as consts from '../constants';
@@ -38,7 +38,7 @@ export function backspace(editor: IJodit) {
 				container !== editor.editor
 			) {
 				parent = box.parentNode;
-				Dom.safeRemove(box);
+				editor.selection.removeNode(box);
 			} else {
 				break;
 			}
@@ -118,7 +118,7 @@ export function backspace(editor: IJodit) {
 				range.collapse(true);
 				editor.selection.selectRange(range);
 
-				Dom.safeRemove(box.node);
+				editor.selection.removeNode(box.node);
 
 				box.node = nextElement;
 			}
@@ -142,7 +142,7 @@ export function backspace(editor: IJodit) {
 
 	const removePotential = (node: Node | null): false | void => {
 		if (node && potentialRemovable.test(node.nodeName)) {
-			Dom.safeRemove(node);
+			editor.selection.removeNode(node);
 			return false;
 		}
 	};
@@ -194,6 +194,7 @@ export function backspace(editor: IJodit) {
 			return removePotential(node);
 		}
 	};
+
 	const isEmpty = (node: Node): boolean => {
 		if (node.nodeName.match(/^(TD|TH|TR|TABLE|LI)$/) !== null) {
 			return false;
@@ -225,7 +226,7 @@ export function backspace(editor: IJodit) {
 					current.firstChild &&
 					current.firstChild.nodeName === 'BR'
 				) {
-					Dom.safeRemove(current.firstChild);
+					editor.selection.removeNode(current.firstChild);
 				}
 
 				if (
@@ -239,7 +240,7 @@ export function backspace(editor: IJodit) {
 						editor.editor
 					);
 
-					Dom.safeRemove(node);
+					editor.selection.removeNode(node);
 				}
 			}
 		})
@@ -262,21 +263,19 @@ export function backspace(editor: IJodit) {
 						return false;
 					}
 
-					const
-						sel = editor.selection.sel,
-						range = sel && sel.rangeCount ? sel.getRangeAt(0) : false;
+					const sel = editor.selection.sel,
+						range =
+							sel && sel.rangeCount ? sel.getRangeAt(0) : false;
 
 					if (!range) {
 						return false;
 					}
 
-					const fakeNode: Node = editor.ownerDocument.createTextNode(
+					const fakeNode: Node = editor.create.inside.text(
 						consts.INVISIBLE_SPACE
 					);
 
-					const marker: HTMLElement = editor.editorDocument.createElement(
-						'span'
-					);
+					const marker: HTMLElement = editor.create.inside.span();
 
 					try {
 						range.insertNode(fakeNode);
@@ -360,7 +359,7 @@ export function backspace(editor: IJodit) {
 								);
 						} else {
 							if (prevBox && isEmpty(prevBox)) {
-								Dom.safeRemove(prevBox);
+								editor.selection.removeNode(prevBox);
 								return false;
 							}
 						}
@@ -417,7 +416,7 @@ export function backspace(editor: IJodit) {
 										UL !== nextBox
 									) {
 										Dom.moveContent(nextBox, UL, !toLeft);
-										Dom.safeRemove(nextBox);
+										editor.selection.removeNode(nextBox);
 									}
 								}
 							}
@@ -440,7 +439,7 @@ export function backspace(editor: IJodit) {
 								parent.parentNode &&
 								parent !== editor.editor
 							) {
-								Dom.safeRemove(parent);
+								editor.selection.removeNode(parent);
 							}
 						}
 

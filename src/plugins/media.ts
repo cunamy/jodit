@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { Config } from '../Config';
@@ -53,17 +53,7 @@ export function media(editor: IJodit) {
 			let wrapper: HTMLElement;
 
 			wrapper = editor.create.inside.fromHTML(
-				'<' +
-					mediaFakeTag +
-					' data-jodit-temp="1" ' +
-					'contenteditable="false" ' +
-					'draggable="true" ' +
-					'data-' +
-					keyFake +
-					'="1">' +
-					'</' +
-					mediaFakeTag +
-					'>'
+				`<${mediaFakeTag} data-jodit-temp="1" contenteditable="false" draggable="true" data-${keyFake}="1"></${mediaFakeTag}>`
 			);
 
 			wrapper.style.display =
@@ -102,7 +92,7 @@ export function media(editor: IJodit) {
 				}
 			})
 			.on(
-				'change afterInit afterSetMode',
+				'change afterInit afterSetMode changePlace',
 				debounce(() => {
 					if (
 						!editor.isDestructed &&

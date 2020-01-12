@@ -4,10 +4,10 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
-import { HTMLTagNames, IComponent, IDictionary, Modes } from './types';
+import { HTMLTagNames, IComponent, IDestructible, IDictionary, Modes } from './types';
 import { IViewBased } from './view';
 import { IJodit } from './jodit';
 import { IFileBrowser } from './fileBrowser';
@@ -294,7 +294,7 @@ interface IToolbarCollection extends IComponent {
 
 	clear(): void;
 
-	immedateCheckActiveButtons: () => void;
+	immediateCheckActiveButtons: () => void;
 
 	buttonIsActive(button: IToolbarButton): boolean | void;
 
@@ -313,4 +313,19 @@ interface IToolbarCollection extends IComponent {
 	setDirection(direction: 'rtl' | 'ltr'): void;
 
 	destruct(): void;
+
+	getParentContainer(): HTMLElement;
+}
+
+export interface IStatusBar extends IComponent {
+	show(): void;
+	hide(): void;
+	getHeight(): number;
+	append(el: HTMLElement, inTheRight?: boolean): void;
+}
+
+export interface IProgressBar extends IDestructible {
+	show(): IProgressBar;
+	progress(percentage: number): IProgressBar;
+	hide(): IProgressBar;
 }

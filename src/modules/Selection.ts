@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import * as consts from '../constants';
@@ -26,7 +26,11 @@ import { trim } from './helpers/string';
 type WindowSelection = Selection | null;
 
 export class Select {
-	constructor(readonly jodit: IJodit) {}
+	constructor(readonly jodit: IJodit) {
+		jodit.events.on('removeMarkers', () => {
+			this.removeMarkers();
+		});
+	}
 
 	/**
 	 * Throw Error exception if parameter is not Node
@@ -95,6 +99,19 @@ export class Select {
 				sel.getRangeAt(i).collapse(true);
 			}
 		}
+	}
+
+	/**
+	 * Remove node element from editor
+	 * @param node
+	 */
+	removeNode(node: Node): void {
+		if (!Dom.isOrContains(this.jodit.editor, node, true)) {
+			throw new Error('Selection.removeNode can remove only editor\'s children');
+		}
+
+		Dom.safeRemove(node);
+		this.jodit.events.fire('afterRemoveNode', node);
 	}
 
 	/**
@@ -364,6 +381,10 @@ export class Select {
 				range.collapse(true);
 				sel.removeAllRanges();
 				sel.addRange(range);
+			}
+
+			if (!this.jodit.editorIsActive) {
+				this.jodit?.events?.fire('focus');
 			}
 
 			return true;

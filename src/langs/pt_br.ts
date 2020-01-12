@@ -89,7 +89,7 @@ export default {
 
 	// plugin paste
 	'Your code is similar to HTML. Keep as HTML?':
-		'Seu código é simular ao HTML. Manter como HTML?',
+		'Seu código é similar ao HTML. Manter como HTML?',
 	'Paste as HTML': 'Colar como HTML?',
 	Keep: 'Manter',
 	Clean: 'Limpar',
@@ -148,6 +148,7 @@ export default {
 	'Sort by name': 'Ordenar por nome',
 	'Sort by size': 'Ordenar por tamanho',
 	'Add folder': 'Adicionar pasta',
+	'Split': 'Dividir',
 	'Split vertical': 'Dividir vertical',
 	'Split horizontal': 'Dividir horizontal',
 	Merge: 'Mesclar',
@@ -233,4 +234,5 @@ export default {
 	'Your browser doesn\'t support direct access to the clipboard.': 'O seu navegador não oferece suporte a acesso direto para a área de transferência.',
 	'Copy selection': 'Selecção de cópia',
 	'copy': 'cópia',
+	'Border radius': 'Border radius',
 } as IDictionary<string>;

@@ -149,6 +149,7 @@ export default {
 	'Sort by name': 'Sorteren op naam',
 	'Sort by size': 'Sorteren op grootte',
 	'Add folder': 'Map toevoegen',
+	Split: 'Splitsen',
 	'Split vertical': 'Verticaal splitsen',
 	'Split horizontal': 'Horizontaal splitsen',
 	Merge: 'Samenvoegen',
@@ -234,4 +235,5 @@ export default {
 	'Your browser doesn\'t support direct access to the clipboard.': 'Uw browser ondersteunt geen directe toegang tot het klembord.',
 	'Copy selection': 'Selectie kopiëren',
 	'copy': 'kopiëren',
+	'Border radius': 'Border radius',
 } as IDictionary<string>;

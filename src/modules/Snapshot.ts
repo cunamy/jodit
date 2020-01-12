@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { IJodit, SnapshotType } from '../types';
@@ -22,7 +22,7 @@ export class Snapshot extends Component<IJodit> {
 	 * @param {SnapshotType} second - second shot
 	 * @return {boolean}
 	 */
-	public static equal(first: SnapshotType, second: SnapshotType): boolean {
+	static equal(first: SnapshotType, second: SnapshotType): boolean {
 		return (
 			first.html === second.html &&
 			JSON.stringify(first.range) === JSON.stringify(second.range)
@@ -222,8 +222,10 @@ export class Snapshot extends Component<IJodit> {
 				this.jodit.selection.selectRange(range);
 			}
 		} catch (__ignore) {
+			this.jodit.editor.lastChild && this.jodit.selection.setCursorAfter(this.jodit.editor.lastChild);
+
 			if (process.env.NODE_ENV !== 'production') {
-				throw __ignore;
+				console.warn('Broken snapshot', __ignore);
 			}
 		}
 

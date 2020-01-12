@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { Config } from '../Config';
@@ -12,7 +12,6 @@ import {
 	css,
 	ctrlKey,
 	dataBind,
-	setTimeout,
 	splitArray,
 	throttle
 } from '../modules/helpers/';
@@ -89,7 +88,7 @@ export class DragAndDropElement extends Plugin {
 		this.isCopyMode = ctrlKey(event); // we can move only element from editor
 		this.onDragEnd();
 
-		this.timeout = setTimeout(
+		this.timeout = this.jodit.async.setTimeout(
 			(lastNode?: HTMLElement) => {
 				if (!lastNode) {
 					return;
@@ -118,7 +117,11 @@ export class DragAndDropElement extends Plugin {
 	};
 
 	private onDragEnd = () => {
-		window.clearTimeout(this.timeout);
+		if (this.isInDestruct) {
+			return;
+		}
+
+		this.jodit.async.clearTimeout(this.timeout);
 
 		if (this.draggable) {
 			Dom.safeRemove(this.draggable);
@@ -150,7 +153,7 @@ export class DragAndDropElement extends Plugin {
 		this.jodit.events.fire('synchro');
 	};
 
-	public afterInit() {
+	afterInit() {
 		this.dragList = this.jodit.options.draggableTags
 			? splitArray(this.jodit.options.draggableTags)
 					.filter(item => item)

@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { Config } from '../Config';
@@ -24,7 +24,7 @@ Config.prototype.controls.brush = {
 
 		const
 			current: Node | false = editor.selection.current(),
-			icon: SVGSVGElement | null = button.container.querySelector('svg');
+			icon = button.container.querySelector('svg');
 
 		if (icon && icon.style.fill) {
 			icon.style.removeProperty('fill');
@@ -46,8 +46,8 @@ Config.prototype.controls.brush = {
 				) as HTMLElement) || editor.editor;
 
 			const
-				colorHEX: string = css(currentBpx, 'color').toString(),
-				bgHEX: string = css(currentBpx, 'background-color').toString();
+				colorHEX = css(currentBpx, 'color').toString(),
+				bgHEX = css(currentBpx, 'background-color').toString();
 
 			if (colorHEX !== css(editor.editor, 'color').toString()) {
 				icon && (icon.style.fill = colorHEX);

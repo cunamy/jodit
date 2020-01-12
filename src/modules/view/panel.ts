@@ -4,54 +4,88 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { Component } from '../Component';
-import { IPanel, IViewBased } from '../../types/view';
+import { IPanel, IViewBased, IViewOptions } from '../../types/view';
 import { Dom } from '../Dom';
 import { Create } from '../Create';
-import { isJoditObject } from '../helpers/checker/isJoditObject';
 
-export class Panel extends Component implements IPanel {
+export abstract class Panel extends Component implements IPanel {
 	protected __whoLocked: string | false = '';
 	protected __isFullSize: boolean = false;
 
-	ownerDocument: Document = document;
-	ownerWindow: Window = window;
+	ownerDocument: Document;
+	ownerWindow: Window;
 
 	container: HTMLDivElement;
 
 	/**
 	 * @property {Create} Native DOM element creator
 	 */
-	public create: Create;
+	create: Create;
 
-	constructor(jodit?: IViewBased) {
+	abstract options: IViewOptions;
+	protected initOptions(options?: IViewOptions): void {
+		this.options = { ...(this.options || {}), ...options };
+	}
+
+	protected initOwners(): void {
+		this.ownerDocument = window.document;
+		this.ownerWindow = window;
+	}
+
+	/**
+	 * Try to find element by selector
+	 * @param element
+	 */
+	protected resolveElement(element: string | HTMLElement): HTMLElement {
+		let resolved = element;
+
+		if (typeof element === 'string') {
+			try {
+				resolved = this.ownerDocument.querySelector(
+					element
+				) as HTMLInputElement;
+			} catch {
+				throw new Error(
+					'String "' + element + '" should be valid HTML selector'
+				);
+			}
+		}
+
+		// Duck checking
+		if (
+			!resolved ||
+			typeof resolved !== 'object' ||
+			resolved.nodeType !== Node.ELEMENT_NODE ||
+			!resolved.cloneNode
+		) {
+			throw new Error(
+				'Element "' +
+				element +
+				'" should be string or HTMLElement instance'
+			);
+		}
+
+		return resolved;
+	}
+
+	protected constructor(jodit?: IViewBased, options?: IViewOptions) {
 		super(jodit);
+
+		this.initOptions(options);
+		this.initOwners();
 
 		if (jodit && jodit.ownerDocument) {
 			this.ownerDocument = jodit.ownerDocument;
 			this.ownerWindow = jodit.ownerWindow;
 		}
 
-		this.create = new Create(
-			this.ownerDocument,
-			isJoditObject(jodit) ? jodit.editorDocument : undefined
-		);
+		this.create = new Create(this);
 
 		this.container = this.create.div();
-	}
-
-	destruct(): any {
-		if (!this.isDestructed) {
-			return;
-		}
-
-		Dom.safeRemove(this.container);
-		delete this.container;
-
-		super.destruct();
 	}
 
 	isLocked = (): boolean => this.__whoLocked !== '';
@@ -95,5 +129,14 @@ export class Panel extends Component implements IPanel {
 		}
 
 		this.__isFullSize = isFullSize;
+	}
+
+	destruct(): any {
+		if (!this.isDestructed) {
+			return;
+		}
+
+		Dom.safeRemove(this.container);
+		super.destruct();
 	}
 }

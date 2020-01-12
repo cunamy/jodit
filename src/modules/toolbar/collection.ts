@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { IDictionary, IToolbarCollection } from '../../types';
@@ -24,6 +24,7 @@ import { ToolbarSeparator } from './separator';
 import { Dom } from '../Dom';
 import { Component } from '../Component';
 import { Config } from '../../Config';
+import { isJoditObject } from '../helpers/checker/isJoditObject';
 
 export class ToolbarCollection<T extends IViewBased = IViewBased>
 	extends Component<T>
@@ -46,7 +47,7 @@ export class ToolbarCollection<T extends IViewBased = IViewBased>
 				};
 			}
 		} else {
-			const list: string[] = button.split(/\./);
+			const list = button.split(/\./);
 
 			let store: IDictionary<IControlType> = controls;
 
@@ -81,19 +82,28 @@ export class ToolbarCollection<T extends IViewBased = IViewBased>
 		this.jodit.events
 			.on(this.jodit.ownerWindow, 'mousedown touchend', this.closeAll)
 			.on(this.listenEvents, this.checkActiveButtons)
-			.on('afterSetMode focus', this.immedateCheckActiveButtons);
+			.on('afterSetMode focus', this.immediateCheckActiveButtons);
 	};
 
-	public readonly listenEvents: string =
+	readonly listenEvents: string =
 		'changeStack mousedown mouseup keydown change afterInit readonly afterResize ' +
-		'selectionchange changeSelection focus afterSetMode touchstart';
+		'selectionchange changeSelection focus afterSetMode touchstart focus blur';
 
-	public getButtonsList(): string[] {
+	getButtonsList(): string[] {
 		return this.__buttons
 			.map((a: ToolbarElement) =>
 				a instanceof ToolbarButton ? a.control.name : ''
 			)
 			.filter(a => a !== '');
+	}
+
+	private __parentContainer: HTMLElement;
+
+	/**
+	 * Returns parent container
+	 */
+	getParentContainer(): HTMLElement {
+		return this.__parentContainer;
 	}
 
 	appendChild(button: ToolbarElement) {
@@ -116,9 +126,42 @@ export class ToolbarCollection<T extends IViewBased = IViewBased>
 		}
 	}
 
-	build(buttons: Buttons, container: HTMLElement, target?: HTMLElement) {
+	private applyContainerOptions() {
+		this.container.classList.add(
+			'jodit_' + (this.jodit.options.theme || 'default') + '_theme'
+		);
+
+		this.jodit.container.classList.toggle('jodit_text_icons', this.jodit.options.textIcons);
+		this.container.classList.toggle('jodit_text_icons', this.jodit.options.textIcons);
+
+		if (this.jodit.options.zIndex) {
+			this.container.style.zIndex = parseInt(
+				this.jodit.options.zIndex.toString(),
+				10
+			).toString();
+		}
+
+		const bs = (this.jodit.options.toolbarButtonSize || 'middle').toLowerCase();
+
+		this.container.classList.add(
+			'jodit_toolbar_size-' +
+			(['middle', 'large', 'small'].indexOf(bs) !== -1
+				? bs
+				: 'middle')
+		);
+	}
+
+	build(buttons: Buttons, parentContainer: HTMLElement, target?: HTMLElement) {
+		this.applyContainerOptions();
+
+		this.jodit.events.off('rebuildToolbar');
+		this.jodit.events.on('afterInit rebuildToolbar', () => this.build(buttons, parentContainer, target));
+
+		this.__parentContainer = parentContainer;
+
 		let lastBtnSeparator: boolean = false;
 		this.clear();
+
 		const buttonsList: Array<IControlType | string> =
 			typeof buttons === 'string' ? buttons.split(/[,\s]+/) : buttons;
 
@@ -155,11 +198,11 @@ export class ToolbarCollection<T extends IViewBased = IViewBased>
 				}
 			});
 
-		if (this.container.parentNode !== container) {
-			container.appendChild(this.container);
+		if (this.container.parentNode !== parentContainer) {
+			parentContainer.appendChild(this.container);
 		}
 
-		this.immedateCheckActiveButtons();
+		this.immediateCheckActiveButtons();
 	}
 
 	clear() {
@@ -172,7 +215,7 @@ export class ToolbarCollection<T extends IViewBased = IViewBased>
 		this.__buttons.length = 0;
 	}
 
-	immedateCheckActiveButtons = () => {
+	immediateCheckActiveButtons = () => {
 		if (this.isDestructed || this.jodit.isLocked()) {
 			return;
 		}
@@ -194,7 +237,15 @@ export class ToolbarCollection<T extends IViewBased = IViewBased>
 		this.jodit.events && this.jodit.events.fire('updateToolbar');
 	};
 
+	/**
+	 * Check if button has active state
+	 * @param button
+	 */
 	buttonIsActive(button: ToolbarButton): boolean | void {
+		if (isJoditObject(this.jodit) && !this.jodit.editorIsActive) {
+			return false;
+		}
+
 		if (typeof button.control.isActive === 'function') {
 			return button.control.isActive(this.jodit, button.control, button);
 		}
@@ -238,7 +289,7 @@ export class ToolbarCollection<T extends IViewBased = IViewBased>
 	}
 
 	checkActiveButtons = debounce(
-		this.immedateCheckActiveButtons,
+		this.immediateCheckActiveButtons,
 		this.jodit.defaultTimeout
 	);
 
@@ -255,6 +306,7 @@ export class ToolbarCollection<T extends IViewBased = IViewBased>
 
 	constructor(jodit: IViewBased) {
 		super(<T>jodit);
+
 		this.container = this.jodit.create.element('ul');
 		this.container.classList.add('jodit_toolbar');
 
@@ -269,7 +321,7 @@ export class ToolbarCollection<T extends IViewBased = IViewBased>
 		this.jodit.events
 			.off(this.jodit.ownerWindow, 'mousedown touchstart', this.closeAll)
 			.off(this.listenEvents, this.checkActiveButtons)
-			.off('afterSetMode focus', this.immedateCheckActiveButtons);
+			.off('afterSetMode focus', this.immediateCheckActiveButtons);
 
 		this.clear();
 

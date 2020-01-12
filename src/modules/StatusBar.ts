@@ -4,25 +4,54 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
-import { Component } from './Component';
+import { Component, STATUSES } from './Component';
 import { Dom } from './Dom';
-import { IJodit } from '../types';
+import { IJodit, IStatusBar } from '../types';
 
-export class StatusBar extends Component {
-	public container: HTMLElement;
+export class StatusBar extends Component implements IStatusBar {
+	container: HTMLElement;
 
-	public hide() {
-		this.container && (this.container.style.display = 'none');
+	/**
+	 * Hide statusbar
+	 */
+	hide() {
+		this.container && this.container.classList.add('jodit_hidden');
 	}
-	public show() {
-		this.container && (this.container.style.display = 'block');
+
+	/**
+	 * Show statusbar
+	 */
+	show() {
+		this.container && this.container.classList.remove('jodit_hidden');
 	}
 
-	public append(child: HTMLElement, inTheRight: boolean = false) {
-		const wrapper = this.jodit.create.div('jodit_statusbar_item');
+	/**
+	 * Height of statusbar
+	 */
+	getHeight(): number {
+		return this.container.offsetHeight;
+	}
+
+	private findEmpty(inTheRight: boolean = false): HTMLDivElement | void {
+		const items = this.container.querySelectorAll('.jodit_statusbar_item' + (inTheRight ? '.jodit_statusbar_item-right' : ''));
+		for (let i = 0; i < items.length; i += 1) {
+			if (!items[i].innerHTML.trim().length) {
+				return items[i] as HTMLDivElement;
+			}
+		}
+	}
+
+	/**
+	 * Add element in statusbar
+	 *
+	 * @param child
+	 * @param inTheRight
+	 */
+	append(child: HTMLElement, inTheRight: boolean = false) {
+		const wrapper = this.findEmpty(inTheRight) || this.jodit.create.div('jodit_statusbar_item');
 
 		if (inTheRight) {
 			wrapper.classList.add('jodit_statusbar_item-right');
@@ -38,13 +67,17 @@ export class StatusBar extends Component {
 	constructor(jodit: IJodit, readonly target: HTMLElement) {
 		super(jodit);
 		this.container = jodit.create.div('jodit_statusbar');
+
 		target.appendChild(this.container);
 		this.hide();
 	}
 
 	destruct() {
+		this.setStatus(STATUSES.beforeDestruct);
+
 		Dom.safeRemove(this.container);
 		delete this.container;
+
 		super.destruct();
 	}
 }

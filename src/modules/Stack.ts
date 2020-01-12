@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { Command } from './observer/command';
@@ -17,18 +17,18 @@ export class Stack {
 		this.commands.length = this.stackPosition + 1;
 	}
 
-	public clear() {
+	clear() {
 		this.commands.length = 0;
 		this.stackPosition = -1;
 	}
 
-	public push(command: Command) {
+	push(command: Command) {
 		this.clearRedo();
 		this.commands.push(command);
 		this.stackPosition += 1;
 	}
 
-	public undo(): boolean {
+	undo(): boolean {
 		if (this.canUndo()) {
 			if (this.commands[this.stackPosition]) {
 				this.commands[this.stackPosition].undo();
@@ -42,7 +42,7 @@ export class Stack {
 		return false;
 	}
 
-	public redo(): boolean {
+	redo(): boolean {
 		if (this.canRedo()) {
 			this.stackPosition += 1;
 
@@ -56,11 +56,11 @@ export class Stack {
 		return false;
 	}
 
-	public canUndo(): boolean {
+	canUndo(): boolean {
 		return this.stackPosition >= 0;
 	}
 
-	public canRedo(): boolean {
+	canRedo(): boolean {
 		return this.stackPosition < this.commands.length - 1;
 	}
 }

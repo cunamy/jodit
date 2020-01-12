@@ -4,21 +4,30 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
+
+@color-source-area: #323232;
+
+.fontSource() {
+	font: 12px / normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas',
+		'source-code-pro', monospace;
+}
 
 .jodit_source {
 	display: none;
 	position: relative;
-	background-color: #f8f8f8;
-	font-size: 0;
+	background-color: @color-source-area;
 	min-height: 100%;
-	flex: 1;
+	flex: auto;
 	overflow: auto;
-	.jodit_source_mirror {
-	}
+
 	.jodit_source_mirror-fake {
 		min-height: 100%;
+	}
+
+	* {
+		.fontSource();
 	}
 }
 
@@ -27,6 +36,7 @@
 	.jodit_wysiwyg_iframe {
 		display: none !important;
 	}
+
 	.jodit_source {
 		display: block !important;
 	}
@@ -45,24 +55,26 @@
 .jodit_source_mirror {
 	border: 0;
 	width: 100%;
-	background: #3f3f3f;
-	margin: 0;
 	height: 100%;
-	box-shadow: none;
+
+	background: @color-source-area;
+	margin: 0;
 	resize: none;
 	box-sizing: border-box;
 	color: #f0f0f0;
 	outline: none;
-	font-family: Menlo, Monaco, monospace, sans-serif;
-	font-size: 13px;
-	line-height: 1.3em;
+
+	.fontSource();
+	line-height: 1.5;
+
+	box-shadow: none;
 	overflow: auto;
 	z-index: 2;
 	padding: 10px;
-	overflow: auto;
 	white-space: pre-wrap;
 	tab-size: 2em;
 	min-height: 100%;
+
 	&::selection {
 		background: @color-selection-area;
 	}

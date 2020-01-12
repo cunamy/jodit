@@ -214,6 +214,7 @@ export default {
 	'Sort by name': '名称排序',
 	'Sort by size': '大小排序',
 	'Add folder': '新建文件夹',
+	Split: '拆分',
 	'Split vertical': '垂直拆分',
 	'Split horizontal': '水平拆分',
 	'You can only edit your own images. Download this image on the host?':
@@ -230,4 +231,5 @@ export default {
 	'Your browser doesn\'t support direct access to the clipboard.': '你浏览器不支持直接访问的剪贴板。',
 	'Copy selection': '复制的选择',
 	'copy': '复制',
+	'Border radius': '边界半径',
 } as IDictionary<string>;

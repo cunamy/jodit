@@ -4,15 +4,27 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
-export const defaultLanguage = (language?: string): string =>
-	language === 'auto' || language === undefined
-		? (document.documentElement && document.documentElement.lang) ||
-		  (navigator.language && navigator.language.substr(0, 2)) ||
-		  ((navigator as any).browserLanguage
-				? (navigator as any).browserLanguage.substr(0, 2)
-				: false) ||
-		  'en'
-		: language;
+/**
+ * Try define user language
+ *
+ * @param language
+ * @param defaultLanguage
+ */
+export const defaultLanguage = (language?: string, defaultLanguage: string = 'en'): string => {
+	if (language !== 'auto' && typeof language === 'string') {
+		return language;
+	}
+
+	if (document.documentElement && document.documentElement.lang) {
+		return document.documentElement.lang;
+	}
+
+	if (navigator.language) {
+		return navigator.language.substr(0, 2)
+	}
+
+	return defaultLanguage;
+};

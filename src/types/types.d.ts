@@ -4,19 +4,34 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { IViewBased } from './view';
+import { IJodit } from './jodit';
 
 export interface IDictionary<T = any> {
 	[key: string]: T;
 }
 
-interface IComponent<T extends IViewBased = IViewBased> {
+export interface IInitable {
+	init(jodit: IViewBased): any;
+}
+
+export interface IDestructible {
+	destruct(jodit?: IJodit): any;
+}
+
+export type ComponentStatus = number;
+
+interface IComponent<T extends IViewBased = IViewBased> extends IDestructible {
 	jodit: T;
 	isDestructed: boolean;
-	destruct(): any;
+	isInDestruct: boolean;
+	isReady: boolean;
+
+	componentStatus: ComponentStatus;
+	setStatus(componentStatus: ComponentStatus): void;
 }
 
 export type NodeCondition = (
@@ -122,13 +137,6 @@ export interface markerInfo {
 	collapsed: boolean;
 	startMarker: string;
 	endMarker?: string;
-}
-
-export interface IPlugin {
-	jodit: IViewBased;
-	destruct(): void;
-	afterInit(jodit?: IViewBased): void;
-	beforeDestruct(jodit?: IViewBased): void;
 }
 
 /**

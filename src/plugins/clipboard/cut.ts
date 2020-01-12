@@ -4,11 +4,10 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { IControlType, IJodit, IPlugin } from '../../types';
-import { Plugin } from '../../modules';
 import { Config } from '../../Config';
 import { TEXT_HTML, TEXT_PLAIN } from '../../constants';
 import { stripTags } from '../../modules/helpers/html';
@@ -31,9 +30,10 @@ export const pluginKey = 'clipboard';
 /**
  * Clipboard plugin - cut and copy functionality
  */
-export class clipboard extends Plugin implements IPlugin {
-	afterInit(editor: IJodit): void {
+export class clipboard implements IPlugin {
+	init(editor: IJodit): void {
 		editor.events
+			.off(`copy.${pluginKey} cut.${pluginKey}`)
 			.on(
 				`copy.${pluginKey} cut.${pluginKey}`,
 				(event: ClipboardEvent): false | void => {
@@ -63,7 +63,7 @@ export class clipboard extends Plugin implements IPlugin {
 			)
 	}
 
-	beforeDestruct(editor: IJodit): void {
+	destruct(editor: IJodit): void {
 		editor?.buffer?.set(pluginKey, '');
 		editor?.events?.off('.' + pluginKey);
 	}

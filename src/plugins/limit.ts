@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 import { Config } from '../Config';
 import {
@@ -82,14 +82,15 @@ export function limit(jodit: IJodit) {
 		let snapshot: SnapshotType | null = null;
 
 		jodit.events
+			.off('.limit')
 			.on(
-				'beforePaste',
+				'beforePaste.limit',
 				() => {
 					snapshot = jodit.observer.snapshot.make();
 				}
 			)
 			.on(
-				'keydown keyup beforeEnter beforePaste',
+				'keydown.limit keyup.limit beforeEnter.limit beforePaste.limit',
 				(event: KeyboardEvent): false | void => {
 					if (callback(event) !== undefined) {
 						return false;
@@ -97,7 +98,7 @@ export function limit(jodit: IJodit) {
 				}
 			)
 			.on(
-				'change',
+				'change.limit',
 				debounce((newValue: string, oldValue: string) => {
 					if (
 						callback(
@@ -112,7 +113,7 @@ export function limit(jodit: IJodit) {
 				}, jodit.defaultTimeout)
 			)
 			.on(
-				'afterPaste',
+				'afterPaste.limit',
 				(): false | void => {
 					if (callback(null) === false && snapshot) {
 						jodit.observer.snapshot.restore(snapshot);

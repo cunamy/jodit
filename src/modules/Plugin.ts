@@ -4,33 +4,35 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { IJodit, IPlugin } from '../types';
-import { Component } from './Component';
+import { Component, STATUSES } from './Component';
 
 export abstract class Plugin extends Component<IJodit> implements IPlugin {
-	public abstract afterInit(jodit: IJodit): void;
-
-	public abstract beforeDestruct(jodit: IJodit): void;
+	abstract afterInit(jodit: IJodit): void;
+	abstract beforeDestruct(jodit: IJodit): void;
 
 	constructor(jodit: IJodit) {
 		super(jodit);
+
+		this.destruct = this.destruct.bind(this, jodit);
 
 		jodit.events
 			.on('afterInit', this.afterInit.bind(this, jodit))
 			.on('beforeDestruct', this.destruct);
 	}
 
-	destruct = () => {
+	init(jodit: IJodit) {}
+
+	destruct() {
 		if (!this.isDestructed) {
-			this.jodit.events &&
-				this.jodit.events.off('beforeDestruct', this.destruct);
+			this.setStatus(STATUSES.beforeDestruct);
 
+			this.jodit?.events?.off('beforeDestruct', this.destruct);
 			this.beforeDestruct(this.jodit);
-
 			super.destruct();
 		}
-	};
+	}
 }

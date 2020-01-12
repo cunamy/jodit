@@ -4,12 +4,12 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { Config } from '../Config';
 import { Dom } from '../modules/Dom';
-import { debounce, setTimeout } from '../modules/helpers/async';
+import { debounce } from '../modules/helpers/async';
 import { offset } from '../modules/helpers/size';
 import { ToolbarIcon } from '../modules/toolbar/icon';
 import { IBound, IJodit } from '../types';
@@ -57,7 +57,7 @@ export function addNewLine(editor: IJodit) {
 		return;
 	}
 
-	const line: HTMLDivElement = editor.create.fromHTML(
+	const line = editor.create.fromHTML(
 		'<div role="button" tabIndex="-1" title="' +
 			editor.i18n('Break') +
 			'" class="jodit-add-new-line"><span>' +
@@ -87,17 +87,17 @@ export function addNewLine(editor: IJodit) {
 			return;
 		}
 
-		clearTimeout(timeout);
+		editor.async.clearTimeout(timeout);
 		line.classList.toggle('jodit-add-new-line_after', !preview);
-		line.style.display = 'block';
+		editor.container.appendChild(line);
 		line.style.width = editor.editor.clientWidth + 'px';
 		hidden = false;
 	};
 
 	const hideForce = () => {
-		clearTimeout(timeout);
+		editor.async.clearTimeout(timeout);
 		lineInFocus = false;
-		line.style.display = 'none';
+		Dom.safeRemove(line);
 		hidden = true;
 	};
 
@@ -113,22 +113,26 @@ export function addNewLine(editor: IJodit) {
 		if (hidden || lineInFocus) {
 			return;
 		}
-		clearTimeout(timeout);
-		timeout = setTimeout(hideForce, 500);
+
+		timeout = editor.async.setTimeout(hideForce, {
+			timeout: 500,
+			label: 'add-new-line-hide'
+		});
 	};
 
 	editor.events
 		.on('beforeDestruct', () => {
+			editor.async.clearTimeout(timeout);
 			Dom.safeRemove(line);
+			editor.events.off(line);
 		})
 		.on('afterInit', () => {
-			editor.container.appendChild(line);
 			editor.events
 				.on(line, 'mousemove', (e: MouseEvent) => {
 					e.stopPropagation();
 				})
 				.on(line, 'mousedown touchstart', (e: MouseEvent) => {
-					const p: HTMLElement = editor.editorDocument.createElement(
+					const p: HTMLElement = editor.create.inside.element(
 						editor.options.enter
 					);
 
@@ -147,9 +151,8 @@ export function addNewLine(editor: IJodit) {
 		})
 		.on('afterInit', () => {
 			editor.events
-				.on(editor.editor, 'scroll', () => {
-					hideForce();
-				})
+				.on(editor.editor, 'scroll', hideForce)
+				.on('change', hideForce)
 				.on(editor.container, 'mouseleave', hide)
 				.on(line, 'mouseenter', () => {
 					clearTimeout(timeout);
@@ -170,8 +173,9 @@ export function addNewLine(editor: IJodit) {
 							editor,
 							editor.editorDocument
 						);
-						const top: number =
-							e.pageY - editor.editorWindow.pageYOffset;
+
+						const top = e.pageY - editor.editorWindow.pageYOffset;
+
 						const p: HTMLElement = editor.editorDocument.createElement(
 							editor.options.enter
 						);

@@ -148,6 +148,7 @@ export default {
 	'Sort by name': 'Ordina per nome',
 	'Sort by size': 'Ordina per dimensione',
 	'Add folder': 'Aggiungi cartella',
+	Split: 'Dividere',
 	'Split vertical': 'Dividere verticalmente',
 	'Split horizontal': 'Diviso orizzontale',
 	Merge: 'Fondi',
@@ -232,4 +233,5 @@ export default {
 	'Your browser doesn\'t support direct access to the clipboard.': 'Il tuo browser non supporta l\'accesso diretto agli appunti.',
 	'Copy selection': 'Selezione di copia',
 	'copy': 'copia',
+	'Border radius': 'Border radius',
 } as IDictionary<string>;

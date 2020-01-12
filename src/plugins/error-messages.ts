@@ -4,12 +4,11 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { Config } from '../Config';
 import { Dom } from '../modules/Dom';
-import { setTimeout } from '../modules/helpers/async';
 import { css } from '../modules/helpers';
 import { IJodit } from '../types';
 
@@ -58,8 +57,6 @@ export function errorMessages(editor: IJodit) {
 				});
 			};
 
-		editor.workplace.appendChild(messagesBox);
-
 		/**
 		 * Вывести всплывающее сообщение внизу редактора
 		 *
@@ -82,6 +79,8 @@ export function errorMessages(editor: IJodit) {
 			.on(
 				'errorMessage',
 				(message: string, className: string, timeout: number) => {
+					editor.workplace.appendChild(messagesBox);
+
 					const newmessage = editor.create.div(
 						'active ' + (className || ''),
 						message
@@ -90,10 +89,11 @@ export function errorMessages(editor: IJodit) {
 					messagesBox.appendChild(newmessage);
 
 					recalcOffsets();
-					setTimeout(() => {
+
+					editor.async.setTimeout(() => {
 						newmessage.classList.remove('active');
 
-						setTimeout(() => {
+						editor.async.setTimeout(() => {
 							Dom.safeRemove(newmessage);
 							recalcOffsets();
 						}, 300);

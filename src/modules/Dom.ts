@@ -1,12 +1,12 @@
 /*!
  * Jodit Editor (https://xdsoft.net/jodit/)
  * Licensed under GNU General Public License version 2 or later or a commercial license;
- * Copyright 2013-2019 Valeriy Chupurnov https://xdsoft.net
+ * Copyright 2013-2020 Valeriy Chupurnov https://xdsoft.net
  */
 
 import * as consts from '../constants';
 import { HTMLTagNames, IJodit, NodeCondition } from '../types';
-import { css } from './helpers/';
+import { css, dataBind } from './helpers/';
 import { trim } from './helpers/string';
 
 export class Dom {
@@ -100,7 +100,7 @@ export class Dom {
 
 		const wrapper =
 			typeof tag === 'string'
-				? editor.editorDocument.createElement(tag)
+				? editor.create.inside.element(tag)
 				: tag;
 
 		if (!current.parentNode) {
@@ -162,6 +162,7 @@ export class Dom {
 				) {
 					return false;
 				}
+
 				node = Dom.next(node, nd => !!nd, elm);
 			}
 		}
@@ -355,7 +356,7 @@ export class Dom {
 			node instanceof (win as any).HTMLElement &&
 			this.isBlock(node, win) &&
 			!/^(TD|TH|CAPTION|FORM)$/.test(node.nodeName) &&
-			node.style !== void 0 &&
+			node.style !== undefined &&
 			!/^(fixed|absolute)/i.test(node.style.position)
 		);
 	}
@@ -658,6 +659,21 @@ export class Dom {
 	}
 
 	/**
+	 * Append new element in the start of root
+	 * @param root
+	 * @param newElement
+	 */
+	static appendChildFirst(root: HTMLElement, newElement: HTMLElement | DocumentFragment): void {
+		const child = root.firstChild;
+
+		if (child) {
+			root.insertBefore(newElement, child);
+		} else {
+			root.appendChild(newElement);
+		}
+	}
+
+	/**
 	 * Insert newElement after element
 	 *
 	 * @param elm
@@ -777,7 +793,36 @@ export class Dom {
 	 *
 	 * @param node
 	 */
-	static safeRemove(node: Node | false | null) {
+	static safeRemove(node: Node | false | null | void) {
 		node && node.parentNode && node.parentNode.removeChild(node);
+	}
+
+	/**
+	 * Hide element
+	 * @param node
+	 */
+	static hide(node: HTMLElement | null): void {
+		if (!node) {
+			return;
+		}
+
+		dataBind(node, '__old_display', node.style.display);
+		node.style.display = 'none';
+	}
+
+	/**
+	 * Show element
+	 * @param node
+	 */
+	static show(node: HTMLElement | null): void {
+		if (!node) {
+			return;
+		}
+
+		const display = dataBind(node, '__old_display');
+
+		if (node.style.display === 'none') {
+			node.style.display = display || '';
+		}
 	}
 }

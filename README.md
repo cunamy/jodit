@@ -12,43 +12,60 @@ An excellent WYSIWYG editor written in pure TypeScript without the use of additi
  * [Playground - play with options](https://xdsoft.net/jodit/play.html)
  * [Documentation](https://xdsoft.net/jodit/doc/)
  * [Download&Changes](https://github.com/xdan/jodit/releases)
- 
+
 > For old version, please follow here [https://github.com/xdan/jodit2](https://github.com/xdan/jodit2)
 
 
 ## Get Started
 ## How use
 Download latest [release](https://github.com/xdan/jodit/releases/latest) or
-### INSTALL VIA BOWER
-```bash
-bower install jodit
-```
+
 ### INSTALL VIA NPM
 ```bash
 npm install jodit
 ```
-Include just two files
+or
+```bash
+yarn add jodit
+```
 
-```xml
-<link type="text/css" rel="stylesheet" href="build/jodit.min.css">
+### Include just two files
+
+ES5 Version
+```html
+<link type="text/css" rel="stylesheet" href="build/jodit.min.css"/>
 <script type="text/javascript" src="build/jodit.min.js"></script>
 ```
-### CDN
-```xml
-<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jodit/3.2.46/jodit.min.css">
-<script src="//cdnjs.cloudflare.com/ajax/libs/jodit/3.2.46/jodit.min.js"></script>
+
+ES2018 Version (if your users use only modern browsers)
+```html
+<link type="text/css" rel="stylesheet" href="build/jodit.es2018.min.css"/>
+<script type="text/javascript" src="build/jodit.es2018.min.js"></script>
 ```
+
+### CDN
+```html
+<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jodit/3.3.1/jodit.min.css"/>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jodit/3.3.1/jodit.min.js"></script>
+```
+
 ### USAGE
 
 And some `<textarea>` element
 
-```xml
+```html
 <textarea id="editor" name="editor"></textarea>
 ```
 After this, you can init Jodit plugin
 
 ```javascript
 var editor = new Jodit('#editor');
+editor.value = '<p>start</p>';
+```
+or
+
+```javascript
+const editor = Jodit.make('#editor');
 editor.value = '<p>start</p>';
 ```
 
@@ -71,6 +88,7 @@ Run webpack Hot Reload server:
 ```bash
 npm start
 ```
+
 Demo will be available here
 ```
 http://localhost:2000/
@@ -127,7 +145,7 @@ var editor = new Jodit('#editor', {
 ```javascript
 Jodit.plugins.yourplugin = function (editor) {
     editor.events.on('afterInit', function () {
-        editor.seleciotn.insertHTMl('Text');
+        editor.selection.insertHTMl('Text');
     });
 }
 ```
@@ -144,6 +162,74 @@ var editor = new Jodit('.someselector', {
             }
         }
     ]
+})
+```
+or
+
+```javascript
+var editor = new Jodit('.someselector', {
+	buttons: ['bold', 'insertDate'],
+    controls: {
+        insertDate: {
+            name: 'insertDate',
+            iconURL: 'http://xdsoft.net/jodit/logo.png',
+            exec: function (editor) {
+                editor.selection.insertHTML((new Date).toDateString());
+            }
+        }
+    }
+})
+```
+
+button with plugin
+
+```javascript
+Jodit.plugins.add('insertText', function (editor) {
+    editor.events.on('someEvent', function (text) {
+        editor.selection.insertHTMl('Hello ' + text);
+    });
+});
+
+// or
+
+Jodit.plugins.add('textLength', {
+	init(editor) {
+        const div = editor.create.div('jodit_div');
+        editor.container.appendChild(div);
+        editor.events.on('change.textLength', () => {
+        	div.innerText = editor.value.length;
+        });
+	},
+	destruct(editor) {
+        editor.events.off('change.textLength')
+    }
+});
+
+// or use class
+
+Jodit.plugins.add('textLength', class textLength {
+	init(editor) {
+        const div = editor.create.div('jodit_div');
+        editor.container.appendChild(div);
+        editor.events.on('change.textLength', () => {
+        	div.innerText = editor.value.length;
+        });
+	}
+	destruct(editor) {
+        editor.events.off('change.textLength')
+    }
+});
+
+var editor = new Jodit('.someselector', {
+	buttons: ['bold', 'insertText'],
+    controls: {
+        insertText: {
+            iconURL: 'http://xdsoft.net/jodit/logo.png',
+            exec: function (editor) {
+                editor.events.fire('someEvent', 'world!!!');
+            }
+        }
+    }
 })
 ```
 

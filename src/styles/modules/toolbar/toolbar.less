@@ -4,11 +4,12 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 @import (reference) '../../mixins';
+@import (reference) '../../variables';
 
-@box-shadow-default: 0px 4px 4px -2px rgba(0, 0, 0, 0.14);
+@box-shadow-default: 0 4px 4px -2px rgba(0, 0, 0, 0.14);
 
 .jodit_toolbar,
 .jodit_toolbar * {
@@ -21,6 +22,11 @@
 	position: relative;
 	left: 0;
 	top: 0;
+
+	display: flex;
+	flex: 0 0 auto;
+	flex-shrink: 0;
+	flex-wrap: wrap;
 	margin: 0 !important;
 	padding: 0 !important;
 
@@ -28,9 +34,7 @@
 	font-size: 0;
 
 	background: @color-toolbar;
-	box-shadow: @box-shadow-default;
 	border: 1px solid @color-border;
-	border-bottom: 0;
 
 	& + .jodit_toolbar_dummy {
 		display: none;
@@ -41,24 +45,11 @@
 		left: 0;
 		right: 0;
 		z-index: @z-index-fly-toolbar;
+
 		background: #fff;
 	}
 
-	&.jodit_sticky {
-		position: fixed;
-		position: sticky;
-		z-index: 3;
-		top: 0;
-		left: auto;
-
-		& + .jodit_toolbar_dummy {
-			display: block;
-		}
-	}
-
 	> .jodit_toolbar_btn {
-		display: inline-block;
-		vertical-align: top;
 		margin: 0 !important;
 		padding: 0;
 
@@ -79,62 +70,24 @@
 			}
 		}
 
-		&.jodit_toolbar_btn-separator {
-			border-left: 0;
-			border-right: 1px solid @color-separator;
-			padding: 0;
-			margin: 2px 5px 0 !important;
-			cursor: default;
-		}
-
-		&.jodit_toolbar_btn-break {
-			display: block !important;
-			width: auto;
-			border-top: 1px solid @color-separator;
-			height: 0 !important;
-			margin: 0 3px !important;
-		}
-
 		> a,
 		.jodit_toolbar_btn > a {
 			width: 100%;
 			height: 100%;
-			display: inline-block;
 			outline: none;
 			text-decoration: none;
 
-			&:after {
-				content: '';
-				display: inline-block;
-				height: 100%;
-				vertical-align: middle;
-			}
-
-			&:active + .jodit_tooltip {
-				visibility: hidden !important;
-			}
-
 			&:focus {
-				outline: 1px solid #ccc;
+				outline: 1px solid @color-border;
 			}
-		}
-
-		&.jodit_disabled .jodit_tooltip {
-			display: none !important;
 		}
 
 		> a {
 			line-height: 100%;
 		}
 
-		.jodit_popap_open,
-		&.jodit_dropdown_open .jodit_tooltip,
-		&.jodit_popup_open .jodit_tooltip {
-			visibility: hidden !important;
-		}
-
 		&:not(.jodit_toolbar-input):hover {
-			background-color: #dde4ef;
+			background-color: @color-background-nav-button-hover;
 			outline: none;
 		}
 
@@ -154,23 +107,21 @@
 				vertical-align: middle;
 			}
 		}
+	}
 
-		&.jodit_toolbar-input {
-			input,
-			select {
-				appearance: none;
-				height: 100%;
-				border-radius: 0;
-				outline: none;
-				line-height: 100%;
-			}
+	.jodit_toolbar_btn-separator {
+		border-left: 0;
+		border-right: 1px solid @color-separator;
+		padding: 0;
+		margin: 2px 5px 0 !important;
+		cursor: default;
+	}
 
-			select {
-				padding-right: @padding-default * 2;
-				background: url(data:image/svg+xml;base64,PHN2ZyBpZD0iTGF5ZXJfMSIgZGF0YS1uYW1lPSJMYXllciAxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0Ljk1IDEwIj48ZGVmcz48c3R5bGU+LmNscy0xe2ZpbGw6I2ZmZjt9LmNscy0ye2ZpbGw6IzQ0NDt9PC9zdHlsZT48L2RlZnM+PHRpdGxlPmFycm93czwvdGl0bGU+PHJlY3QgY2xhc3M9ImNscy0xIiB3aWR0aD0iNC45NSIgaGVpZ2h0PSIxMCIvPjxwb2x5Z29uIGNsYXNzPSJjbHMtMiIgcG9pbnRzPSIxLjQxIDQuNjcgMi40OCAzLjE4IDMuNTQgNC42NyAxLjQxIDQuNjciLz48cG9seWdvbiBjbGFzcz0iY2xzLTIiIHBvaW50cz0iMy41NCA1LjMzIDIuNDggNi44MiAxLjQxIDUuMzMgMy41NCA1LjMzIi8+PC9zdmc+)
-					no-repeat 98% 50% !important;
-			}
-		}
+	.jodit_toolbar_btn-break {
+		flex-basis: 100%;
+		width: 0;
+		border-top: 1px solid @color-separator;
+		height: 0 !important;
 	}
 
 	.toolbar_size(@toolbar_middle_size);
@@ -179,30 +130,16 @@
 .jodit_toolbar_btn > a {
 	color: #000;
 	text-decoration: none;
-	display: block;
+
+	display: flex;
+	justify-content: center;
+	align-items: center;
+
 	background: no-repeat center center;
 }
 
 .jodit_toolbar.jodit_text_icons > .jodit_toolbar_btn > a {
 	line-height: 1;
-}
-
-.jodit_tooltip {
-	position: absolute;
-	background: #727171;
-	color: #fff;
-	font-size: 12px;
-	line-height: 15px;
-	padding: 4px 5px;
-	font-family: Arial, sans-serif;
-	z-index: @z-index-dropdownlist + 1;
-	min-width: 90px;
-	width: auto;
-	transition: opacity 0.3s linear;
-
-	@media (max-width: @screen-sm) {
-		display: none;
-	}
 }
 
 .jodit_toolbar_size {
@@ -221,13 +158,15 @@
 	position: absolute;
 	z-index: 10;
 	top: 100%;
+	left: 0;
+
 	margin-top: 10px;
 	padding-top: 0;
-	left: 0;
+
 	font-size: 14px;
 	line-height: 14px !important;
+
 	background: #fff;
-	box-shadow: 0 2px 4px @jodit_toolbar_popup_border;
 	border: 1px solid @jodit_toolbar_popup_border;
 
 	.jodit_toolbar {
@@ -247,20 +186,21 @@
 	}
 
 	.jodit_popup_triangle {
+		position: absolute;
+		top: -@popup-triangle-size / 2 - 1px;
+		left: 9px;
+		z-index: 6;
+
 		padding: 0;
 		margin: 0;
 		width: @popup-triangle-size;
 		height: @popup-triangle-size;
-		position: absolute;
-		top: -@popup-triangle-size / 2 - 1px;
-		left: 9px;
 
 		display: inline-block;
 		transform: rotate(45deg);
 		background: @popup-bg-color;
 		border: solid @jodit_toolbar_popup_border;
 		border-width: 1px 0 0 1px;
-		z-index: 6;
 	}
 
 	&.jodit_right {
@@ -277,7 +217,6 @@
 .jodit_toolbar .jodit_toolbar_btn > svg {
 	max-width: 50%;
 	vertical-align: middle;
-	font-smoothing: antialiased;
 }
 
 .jodit_container > .jodit_toolbar > li:first-child {

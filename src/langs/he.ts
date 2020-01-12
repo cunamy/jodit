@@ -148,6 +148,7 @@ export default {
 	'Sort by name': 'מיין לפי שם',
 	'Sort by size': 'מיין לפי גודל',
 	'Add folder': 'הוסף תקייה',
+	Split: 'פיצול',
 	'Split vertical': 'פיצול אנכי',
 	'Split horizontal': 'פיצול אופקי',
 	Merge: 'מזג',
@@ -232,4 +233,5 @@ export default {
 	'Your browser doesn\'t support direct access to the clipboard.': 'הדפדפן שלך לא תומך גישה ישירה ללוח.',
 	'Copy selection': 'העתק בחירה',
 	'copy': 'העתק',
+	'Border radius': 'רדיוס הגבול',
 } as IDictionary<string>;

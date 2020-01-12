@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import * as consts from '../constants';
@@ -27,8 +27,8 @@ export const insertParagraph = (
 	wrapperTag: HTMLTagNames,
 	style?: CSSStyleDeclaration
 ): HTMLElement => {
-	const p: HTMLElement = editor.create.inside.element(wrapperTag),
-		helper_node: HTMLBRElement = editor.create.inside.element('br');
+	const p = editor.create.inside.element(wrapperTag),
+		helper_node = editor.create.inside.element('br');
 
 	p.appendChild(helper_node);
 
@@ -39,7 +39,7 @@ export const insertParagraph = (
 	editor.selection.insertNode(p, false, false);
 	editor.selection.setCursorBefore(helper_node);
 
-	const range: Range = editor.editorDocument.createRange();
+	const range = editor.editorDocument.createRange();
 
 	range.setStartBefore(wrapperTag.toLowerCase() !== 'br' ? helper_node : p);
 	range.collapse(true);
@@ -68,9 +68,9 @@ export function enter(editor: IJodit) {
 				: (editor.options.enter.toLowerCase() as 'p' | 'div');
 	}
 
-	editor.events.on(
-		'keydown',
-		(event: KeyboardEvent): false | void => {
+	editor.events
+		.off('keydown.enter')
+		.on('keydown.enter', (event: KeyboardEvent): false | void => {
 			if (event.which === consts.KEY_ENTER) {
 				/**
 				 * Fired on processing `Enter` key. If return some value, plugin `enter` will do nothing.
@@ -322,12 +322,11 @@ export function enter(editor: IJodit) {
 						editor,
 						fake,
 						isLi ? 'li' : editor.options.enter,
-						currentBox ? currentBox.style : void 0
+						currentBox ? currentBox.style : undefined
 					);
 				}
 
 				return false;
 			}
-		}
-	);
+		});
 }

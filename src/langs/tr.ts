@@ -149,6 +149,7 @@ export default {
 	'Sort by name': 'İsme göre sırala',
 	'Sort by size': 'Boyuta göre sırala',
 	'Add folder': 'Klasör ekle',
+	Split: 'Ayır',
 	'Split vertical': 'Dikey ayır',
 	'Split horizontal': 'Yatay ayır',
 	Merge: 'Birleştir',
@@ -233,4 +234,5 @@ export default {
 	'Your browser doesn\'t support direct access to the clipboard.': 'Tarayıcınız pano doğrudan erişim desteklemiyor.',
 	'Copy selection': 'Kopya seçimi',
 	'copy': 'kopya',
+	'Border radius': 'Sınır yarıçapı',
 } as IDictionary<string>;

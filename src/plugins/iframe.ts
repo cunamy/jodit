@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { Config } from '../Config';
@@ -12,6 +12,7 @@ import { defaultLanguage } from '../modules/helpers/defaultLanguage';
 import { throttle } from '../modules/helpers/async';
 import { css } from '../modules/helpers/css';
 import { IJodit } from '../types';
+import { isPromise } from '../modules/helpers/checker';
 
 declare module '../Config' {
 	interface Config {
@@ -201,12 +202,10 @@ export function iframe(editor: IJodit) {
 				}
 			}
 		)
-		.on('createEditor', async (): Promise<void | false> => {
+		.on('createEditor', (): void | Promise<void> | false => {
 			if (!editor.options.iframe) {
 				return;
 			}
-
-			delete editor.editor;
 
 			const iframe = editor.create.element('iframe');
 
@@ -220,78 +219,91 @@ export function iframe(editor: IJodit) {
 			editor.workplace.appendChild(iframe);
 			editor.iframe = iframe;
 
-			await editor.events.fire(
+			const result = editor.events.fire(
 				'generateDocumentStructure.iframe',
 				null,
 				editor
 			);
 
-			const doc = (editor.iframe.contentWindow as Window).document;
-			editor.editorDocument = doc;
-			editor.editorWindow = editor.iframe.contentWindow as Window;
+			const init = () => {
+				if (!editor.iframe) {
+					return;
+				}
 
-			editor.create.inside.setDocument(doc);
+				const doc = (editor.iframe.contentWindow as Window).document;
+				editor.editorWindow = editor.iframe.contentWindow as Window;
 
-			editor.editor = doc.body as HTMLBodyElement;
+				editor.editor = doc.body as HTMLBodyElement;
 
-			if (editor.options.height === 'auto') {
-				doc.documentElement &&
-				(doc.documentElement.style.overflowY = 'hidden');
+				if (editor.options.height === 'auto') {
+					doc.documentElement &&
+					(doc.documentElement.style.overflowY = 'hidden');
 
-				const resizeIframe = throttle(() => {
-					if (
-						editor.editor &&
-						editor.iframe &&
-						editor.options.height === 'auto'
-					) {
-						css(
-							editor.iframe,
-							'height',
-							editor.editor.offsetHeight
-						);
-					}
-				}, editor.defaultTimeout / 2);
-				editor.events
-					.on('change afterInit afterSetMode resize', resizeIframe)
-					.on(
-						[
-							editor.iframe,
-							editor.editorWindow,
-							doc.documentElement
-						],
-						'load',
-						resizeIframe
-					)
-					.on(doc, 'readystatechange DOMContentLoaded', resizeIframe);
-			}
+					const resizeIframe = throttle(() => {
+						if (
+							editor.editor &&
+							editor.iframe &&
+							editor.options.height === 'auto'
+						) {
+							css(
+								editor.iframe,
+								'height',
+								editor.editor.offsetHeight
+							);
+						}
+					}, editor.defaultTimeout / 2);
 
-			(e => {
-				e.matches || (e.matches = Element.prototype.matches); // fix inside iframe polifill
-			})((editor.editorWindow as any).Element.prototype);
+					editor.events
+						.on('change afterInit afterSetMode resize', resizeIframe)
+						.on(
+							[
+								editor.iframe,
+								editor.editorWindow,
+								doc.documentElement
+							],
+							'load',
+							resizeIframe
+						)
+						.on(doc, 'readystatechange DOMContentLoaded', resizeIframe);
+				}
 
-			// throw events in our world
-			if (editor.editorDocument.documentElement) {
-				editor.events
-					.on(
-						editor.editorDocument.documentElement,
-						'mousedown touchend',
-						() => {
-							if (!editor.selection.isFocused()) {
-								editor.selection.focus();
-								editor.selection.setCursorIn(editor.editor);
+				(e => {
+					e.matches || (e.matches = Element.prototype.matches); // fix inside iframe polifill
+				})((editor.editorWindow as any).Element.prototype);
+
+				// throw events in our world
+				if (doc.documentElement) {
+					editor.events
+						.on(
+							doc.documentElement,
+							'mousedown touchend',
+							() => {
+								if (!editor.selection.isFocused()) {
+									editor.selection.focus();
+
+									if (editor.editor === doc.body) {
+										editor.selection.setCursorIn(doc.body);
+									}
+								}
 							}
-						}
-					)
-					.on(
-						editor.editorWindow,
-						'mousedown touchstart keydown keyup touchend click mouseup mousemove scroll',
-						(e: Event) => {
-							editor.events &&
-							editor.events.fire &&
-							editor.events.fire(editor.ownerWindow, e);
-						}
-					);
+						)
+						.on(
+							editor.editorWindow,
+							'mousedown touchstart keydown keyup touchend click mouseup mousemove scroll',
+							(e: Event) => {
+								editor.events &&
+								editor.events.fire &&
+								editor.events.fire(editor.ownerWindow, e);
+							}
+						);
+				}
+			};
+
+			if (isPromise(result)) {
+				return result.then(init);
 			}
+
+			init();
 
 			return false;
 		});

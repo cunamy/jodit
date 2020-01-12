@@ -4,18 +4,21 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
+@import (reference) '../variables';
 
-@color-new-line: #ccc;
+@color-new-line: @color-border;
 @width-icon: 30px;
 @height-icon: @padding-default * 2;
 
 .jodit-add-new-line {
 	box-sizing: border-box;
+
 	* {
 		box-sizing: border-box;
 	}
+
 	z-index: 1;
 	position: absolute;
 	height: @height-icon;
@@ -25,25 +28,24 @@
 	top: 0;
 	outline: none;
 	margin-top: -@padding-default;
-	//text-align: right;
-	//padding: 5px;
-	//vertical-align: middle;
+
 	&:before {
 		height: 100%;
 		display: inline-block;
 		vertical-align: middle;
 		content: '';
 	}
+
 	&:after {
 		box-sizing: border-box;
 		vertical-align: middle;
 		content: '';
-		//position: absolute;
 		border-top: 1px solid @color-new-line;
 		height: 1px;
 		display: inline-block;
 		width: ~'calc(100% - @{width-icon})';
 	}
+
 	span {
 		right: 0;
 		position: absolute;
@@ -66,7 +68,7 @@
 		vertical-align: top;
 	}
 
-	display: none;
+	display: block;
 }
 
 .jodit_source_mode {

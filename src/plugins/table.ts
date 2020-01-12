@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { Config } from '../Config';
@@ -18,7 +18,6 @@ import {
 	offset,
 	scrollIntoView
 } from '../modules/helpers/';
-import { setTimeout } from '../modules/helpers/async';
 import { IControlType } from '../types/toolbar';
 import { IBound, IDictionary } from '../types/types';
 import { IJodit } from '../types';
@@ -64,9 +63,7 @@ Config.prototype.controls.table = {
 
 				Object.keys(classList).forEach((classes: string) => {
 					out.push(
-						`<label><input value="${classes}" type="checkbox"/>${
-							classList[classes]
-						}</label>`
+						`<label class="jodit_vertical_middle"><input class="jodit_checkbox" value="${classes}" type="checkbox"/>${classList[classes]}</label>`
 					);
 				});
 			}
@@ -75,7 +72,7 @@ Config.prototype.controls.table = {
 
 		const form: HTMLFormElement = editor.create.fromHTML(
 				'<form class="jodit_form jodit_form_inserter">' +
-					'<label>' +
+					'<label class="jodit_form_center">' +
 					'<span>1</span> &times; <span>1</span>' +
 					'</label>' +
 					'<div class="jodit_form-table-creator-box">' +
@@ -298,15 +295,20 @@ export class TableProcessor extends Plugin {
 	private __resizerHandler: HTMLElement;
 
 	showResizer() {
-		clearTimeout(this.hideTimeout);
+		this.jodit.async.clearTimeout(this.hideTimeout);
 		this.__resizerHandler.style.display = 'block';
 	}
 
 	hideResizer() {
-		clearTimeout(this.hideTimeout);
-		this.hideTimeout = setTimeout(() => {
-			this.__resizerHandler.style.display = 'none';
-		}, this.jodit.defaultTimeout);
+		this.hideTimeout = this.jodit.async.setTimeout(
+			() => {
+				this.__resizerHandler.style.display = 'none';
+			},
+			{
+				timeout: this.jodit.defaultTimeout,
+				label: 'hideResizer'
+			}
+		);
 	}
 
 	private hideTimeout: number;
@@ -436,7 +438,7 @@ export class TableProcessor extends Plugin {
 						}
 					)
 					.on(this.__resizerHandler, 'mouseenter.table', () => {
-						clearTimeout(this.hideTimeout);
+						this.jodit.async.clearTimeout(this.hideTimeout);
 					})
 					.on(
 						this.jodit.editorWindow,
@@ -786,6 +788,8 @@ export class TableProcessor extends Plugin {
 		}
 
 		editor.events
+			.off(this.jodit.ownerWindow, '.table')
+			.off('.table')
 			.on(this.jodit.ownerWindow, 'mouseup.table touchend.table', () => {
 				if (this.__selectMode || this.__drag) {
 					this.__selectMode = false;
@@ -933,11 +937,13 @@ export class TableProcessor extends Plugin {
 			.on('beforeSetMode.table', () => {
 				Table.getAllSelectedCells(editor.editor).forEach(td => {
 					Table.restoreSelection(td);
-					Table.normalizeTable(Dom.closest(
-						td,
-						'table',
-						editor.editor
-					) as HTMLTableElement);
+					Table.normalizeTable(
+						Dom.closest(
+							td,
+							'table',
+							editor.editor
+						) as HTMLTableElement
+					);
 				});
 			})
 			.on('keydown.table', (event: KeyboardEvent) => {

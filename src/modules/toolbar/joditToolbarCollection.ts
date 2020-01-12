@@ -4,12 +4,12 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { ToolbarCollection } from './collection';
 import { ToolbarButton } from './button';
-import { IDictionary } from '../../types/types';
+import { IDictionary, IToolbarCollection } from '../../types/';
 import { IJodit } from '../../types/jodit';
 import { IViewBased } from '../../types/view';
 import { Dom } from '../Dom';
@@ -154,7 +154,11 @@ export class JoditToolbarCollection extends ToolbarCollection<IJodit> {
 		return button.target || this.jodit.selection.current() || undefined;
 	}
 
-	static makeCollection(jodit: IViewBased): ToolbarCollection<IViewBased> {
+	/**
+	 * Collection factory
+	 * @param jodit
+	 */
+	static makeCollection(jodit: IViewBased): IToolbarCollection {
 		const collection = isJoditObject(jodit)
 			? new JoditToolbarCollection(jodit)
 			: new ToolbarCollection(jodit);

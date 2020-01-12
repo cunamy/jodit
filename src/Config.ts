@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import * as consts from './constants';
@@ -23,7 +23,7 @@ import {
 	val
 } from './modules/helpers/';
 import { ToolbarIcon } from './modules/toolbar/icon';
-import { IDictionary, IJodit, IViewOptions } from './types';
+import { IExtraPlugin, IDictionary, IJodit, IViewOptions } from './types';
 import { IFileBrowserCallBackData } from './types/fileBrowser';
 import { Buttons, Controls, IControlType } from './types/toolbar';
 import { extend } from './modules/helpers/extend';
@@ -52,7 +52,7 @@ export class Config implements IViewOptions {
 
 	preset: string = 'custom';
 
-	presets: IDictionary<any> = {
+	presets: IDictionary = {
 		inline: {
 			inline: true,
 			toolbar: false,
@@ -349,7 +349,7 @@ export class Config implements IViewOptions {
 	 * console.log(editor.i18n('Type something')) //Начните что-либо вводить
 	 * ```
 	 */
-	i18n: IDictionary | string = 'en';
+	i18n: false = false;
 
 	/**
 	 * The tabindex global attribute is an integer indicating if the element can take
@@ -359,9 +359,10 @@ export class Config implements IViewOptions {
 	tabIndex: number = -1;
 
 	/**
-	 * Show toolbar
+	 * Boolean, whether the toolbar should be shown.
+	 * Alternatively, a valid css-selector-string to use an element as toolbar container.
 	 */
-	toolbar: boolean = true;
+	toolbar: boolean | string | HTMLElement = true;
 
 	/**
 	 * Show tooltip after mouse enter on the button
@@ -371,7 +372,7 @@ export class Config implements IViewOptions {
 	/**
 	 * Delay before show tooltip
 	 */
-	showTooltipDelay: number = 500;
+	showTooltipDelay: number = 300;
 
 	/**
 	 * Instead of create custop tooltip - use native title tooltips
@@ -555,6 +556,23 @@ export class Config implements IViewOptions {
 	 * ```
 	 */
 	disablePlugins: string[] | string = [];
+
+	/**
+	 * Init and download extra plugins
+	 * @example
+	 * ```typescript
+	 * var editor = new Jodit('.editor', {
+	 *    extraPlugins: ['emoji']
+	 * });
+	 * ```
+	 * It will try load %SCRIPT_PATH%/plugins/emoji/emoji.js and after load will try init it
+	 */
+	extraPlugins: Array<string | IExtraPlugin> = [];
+
+	/**
+	 * Base path for download extra plugins
+	 */
+	basePath?: string;
 
 	/**
 	 * This buttons list will be added to option.buttons
@@ -797,10 +815,8 @@ export class Config implements IViewOptions {
 	}
 }
 
-export const OptionsDefault: any = function(this: any, options: any) {
-	const
-		def = Config.defaultOptions,
-		self: any = this;
+export const OptionsDefault: any = function(this: any, options: any, def: any = Config.defaultOptions) {
+	const self: any = this;
 
 	self.plainOptions = options;
 
@@ -814,8 +830,7 @@ export const OptionsDefault: any = function(this: any, options: any) {
 				}
 			}
 
-			const
-				defValue = (def as any)[key],
+			const defValue = (def as any)[key],
 				isObject = typeof defValue === 'object' && defValue !== null;
 
 			if (
@@ -823,13 +838,7 @@ export const OptionsDefault: any = function(this: any, options: any) {
 				!['ownerWindow', 'ownerDocument'].includes(key) &&
 				!Array.isArray(defValue)
 			) {
-				self[key] = extend(
-					true,
-					{},
-					defValue,
-					(opt as any)[key]
-				);
-
+				self[key] = extend(true, {}, defValue, (opt as any)[key]);
 			} else {
 				self[key] = (opt as any)[key];
 			}
@@ -874,7 +883,8 @@ Config.prototype.controls = {
 				mywindow.close();
 			}
 		},
-		mode: consts.MODE_SOURCE + consts.MODE_WYSIWYG
+		mode: consts.MODE_SOURCE + consts.MODE_WYSIWYG,
+		tooltip: 'Print'
 	} as IControlType,
 
 	about: {
@@ -949,22 +959,14 @@ Config.prototype.controls = {
 						: ($$('img', current)[0] as HTMLImageElement);
 			}
 
+			const selInfo = editor.selection.save();
+
 			return FileSelectorWidget(
 				editor,
 				{
 					filebrowser: async (data: IFileBrowserCallBackData) => {
-						if (data.files && data.files.length) {
-							for (let i = 0; i < data.files.length; i += 1) {
-								await editor.selection.insertImage(
-									data.baseurl + data.files[i],
-									null,
-									editor.options.imageDefaultWidth
-								);
-							}
-						}
-						close();
-					},
-					upload: async (data: IFileBrowserCallBackData) => {
+						editor.selection.restore(selInfo);
+
 						if (data.files && data.files.length) {
 							for (let i = 0; i < data.files.length; i += 1) {
 								await editor.selection.insertImage(
@@ -977,7 +979,10 @@ Config.prototype.controls = {
 
 						close();
 					},
+					upload: true,
 					url: async (url: string, text: string) => {
+						editor.selection.restore(selInfo);
+
 						const image: HTMLImageElement =
 							sourceImage || editor.create.inside.element('img');
 
@@ -1053,15 +1058,7 @@ Config.prototype.controls = {
 						}
 						close();
 					},
-					upload: (data: IFileBrowserCallBackData) => {
-						let i;
-						if (data.files && data.files.length) {
-							for (i = 0; i < data.files.length; i += 1) {
-								insert(data.baseurl + data.files[i]);
-							}
-						}
-						close();
-					},
+					upload: true,
 					url: (url: string, text: string) => {
 						if (sourceAnchor) {
 							sourceAnchor.setAttribute('href', url);
@@ -1082,19 +1079,23 @@ Config.prototype.controls = {
 	} as IControlType,
 	video: {
 		popup: (editor: IJodit, current, control, close) => {
-			const bylink: HTMLFormElement = editor.create.fromHTML(
+			const bylink = editor.create.fromHTML(
 					`<form class="jodit_form">
-												<input required name="code" placeholder="http://" type="url"/>
-												<button type="submit">${editor.i18n('Insert')}</button>
-												</form>`
+					<div class="jodit jodit_form_group">
+						<input class="jodit_input" required name="code" placeholder="http://" type="url"/>
+						<button class="jodit_button" type="submit">${editor.i18n('Insert')}</button>
+					</div>
+				</form>`
 				) as HTMLFormElement,
-				bycode: HTMLFormElement = editor.create.fromHTML(
+				bycode = editor.create.fromHTML(
 					`<form class="jodit_form">
-												<textarea required name="code" placeholder="${editor.i18n(
-													'Embed code'
-												)}"></textarea>
-												<button type="submit">${editor.i18n('Insert')}</button>
-												</form>`
+									<div class="jodit_form_group">
+										<textarea class="jodit_textarea" required name="code" placeholder="${editor.i18n(
+											'Embed code'
+										)}"></textarea>
+										<button class="jodit_button" type="submit">${editor.i18n('Insert')}</button>
+									</div>
+								</form>`
 				) as HTMLFormElement,
 				tab: IDictionary<HTMLFormElement> = {},
 				selinfo = editor.selection.save(),

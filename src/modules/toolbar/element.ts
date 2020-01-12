@@ -4,22 +4,19 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
-import {
-	IControlTypeStrong,
-	IToolbarCollection,
-	IToolbarElement
-} from '../../types/toolbar';
-import { Component } from '../Component';
+import { IControlTypeStrong, IToolbarCollection, IToolbarElement } from '../../types/toolbar';
+import { Component, STATUSES } from '../Component';
 import { ToolbarCollection } from './collection';
 import { ToolbarIcon } from './icon';
 import { Dom } from '../Dom';
 import { IViewBased, TagNames } from '../../types';
 import { trim } from '../helpers/string';
 
-export abstract class ToolbarElement extends Component implements IToolbarElement {
+export abstract class ToolbarElement extends Component
+	implements IToolbarElement {
 	container: HTMLElement;
 	parentToolbar?: IToolbarCollection;
 	use: boolean;
@@ -46,9 +43,11 @@ export abstract class ToolbarElement extends Component implements IToolbarElemen
 	}
 
 	destruct(): any {
-		if (this.isDestructed) {
+		if (this.isInDestruct) {
 			return;
 		}
+
+		this.setStatus(STATUSES.beforeDestruct);
 
 		Dom.safeRemove(this.container);
 		this.parentToolbar = undefined;
@@ -79,7 +78,9 @@ export abstract class ToolbarElement extends Component implements IToolbarElemen
 			if (control && control.iconURL && iconSVG === undefined) {
 				iconElement = this.jodit.create.element('i');
 				iconElement.style.backgroundImage =
-					'url(' + control.iconURL + ')';
+					'url(' +
+					control.iconURL.replace('{basePath}', this.jodit.basePath) +
+					')';
 			} else {
 				if (iconSVG === undefined) {
 					if (ToolbarIcon.exists(icon)) {

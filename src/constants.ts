@@ -4,7 +4,7 @@
  * For GPL see LICENSE-GPL.txt in the project root for license information.
  * For MIT see LICENSE-MIT.txt in the project root for license information.
  * For commercial licenses see https://xdsoft.net/jodit/commercial/
- * Copyright (c) 2013-2019 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
+ * Copyright (c) 2013-2020 Valeriy Chupurnov. All rights reserved. https://xdsoft.net
  */
 
 import { IDictionary } from './types';
@@ -131,3 +131,26 @@ export const KEY_ALIASES: IDictionary<string> = {
 	win: 'meta',
 	windows: 'meta'
 };
+
+export const BASE_PATH: string = ((): string => {
+	if (typeof document  === 'undefined') {
+		return '';
+	}
+
+	const script = document.currentScript as HTMLScriptElement,
+		removeScriptName = (s: string) => s.replace(/\/[^\/]+.js$/, '/');
+
+	if (script) {
+		return removeScriptName(script.src);
+	}
+
+	const scripts = document.querySelectorAll<HTMLScriptElement>(
+		'script[src]'
+	);
+
+	if (scripts && scripts.length) {
+		return removeScriptName(scripts[scripts.length - 1].src);
+	}
+
+	return window.location.href;
+})();
